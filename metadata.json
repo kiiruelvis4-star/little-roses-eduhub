@@ -1,0 +1,6 @@
+{
+  "name": "Little Roses EduHub",
+  "description": "Comprehensive school management and CBC learner portal with Global CBE Evaluation Module (Grades 1-6), automated CAT marks tracking, KNEC projects, exam series, and KICD curriculum alignment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

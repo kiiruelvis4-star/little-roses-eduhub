@@ -16,7 +16,9 @@ import {
   Laptop,
   Check,
   ExternalLink,
-  FolderDown
+  FolderDown,
+  FolderArchive,
+  Terminal
 } from 'lucide-react';
 import { SchoolLogo } from '../SchoolLogo';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -32,8 +34,9 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
   onClose
 }) => {
   const { isInstallable, isInstalled, install, isIOS, isAndroid } = usePWAInstall();
-  const [activeTab, setActiveTab] = useState<'apk' | 'pwa' | 'ios' | 'desktop'>('apk');
+  const [activeTab, setActiveTab] = useState<'zip' | 'apk' | 'pwa' | 'ios' | 'desktop'>('zip');
   const [downloadTriggered, setDownloadTriggered] = useState(false);
+  const [zipDownloadTriggered, setZipDownloadTriggered] = useState(false);
   const [installSuccess, setInstallSuccess] = useState(false);
 
   if (!isOpen) return null;
@@ -47,6 +50,17 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
     a.click();
     document.body.removeChild(a);
     setTimeout(() => setDownloadTriggered(false), 4000);
+  };
+
+  const handleDownloadZip = () => {
+    setZipDownloadTriggered(true);
+    const a = document.createElement('a');
+    a.href = '/LittleRosesEduHub-source.zip';
+    a.download = 'LittleRosesEduHub-v2.0-source.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => setZipDownloadTriggered(false), 4000);
   };
 
   const handleNativeInstall = async () => {
@@ -107,7 +121,55 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-5 overflow-y-auto space-y-4">
-          {/* Quick Primary Actions: Direct APK Download & Quick Install */}
+          {/* Quick Primary Action 1: Project Source Code ZIP Download */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100/60 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-amber-900/20 border-2 border-amber-300 dark:border-amber-700/60 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500 text-white shadow-md">
+                  <FolderArchive className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-amber-950 dark:text-amber-200">
+                      Project Source Code (.ZIP Archive)
+                    </h3>
+                    <span className="text-[10px] font-mono font-bold bg-amber-200 dark:bg-amber-800/80 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded-full">
+                      New v2.0 • 2.5 MB
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-900/80 dark:text-amber-300/80 mt-0.5">
+                    Complete standalone codebase: React 18, TypeScript, CBC evaluation engine, offline data, and Android native wrapper.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDownloadZip}
+              className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-black text-sm rounded-xl shadow-md shadow-amber-600/20 transition-all flex items-center justify-center gap-2.5"
+            >
+              {zipDownloadTriggered ? (
+                <>
+                  <Check className="w-5 h-5 text-slate-950" />
+                  <span>Downloading LittleRosesEduHub-v2.0-source.zip...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  <span>Download App ZIP Archive Directly (2.5 MB)</span>
+                </>
+              )}
+            </button>
+
+            {zipDownloadTriggered && (
+              <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg text-[11px] text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>ZIP download initiated! Extract anywhere to run locally or inspect source files.</span>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Primary Action 2: Direct APK Download */}
           <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/50 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-900/20 border-2 border-emerald-300 dark:border-emerald-700/60 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -141,7 +203,7 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
                 </>
               ) : (
                 <>
-                  <ArrowDownCircle className="w-5 h-5 animate-pulse" />
+                  <ArrowDownCircle className="w-5 h-5" />
                   <span>Download Android APK Directly (847 KB)</span>
                 </>
               )}
@@ -189,10 +251,20 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
 
           {/* Detailed Instructions Tabs */}
           <div>
-            <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 text-xs font-bold text-slate-600 dark:text-slate-300">
+            <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 text-xs font-bold text-slate-600 dark:text-slate-300 overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('zip')}
+                className={`flex-1 min-w-[90px] py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  activeTab === 'zip'
+                    ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs font-black'
+                    : 'hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <FolderArchive className="w-3.5 h-3.5" /> Source ZIP
+              </button>
               <button
                 onClick={() => setActiveTab('apk')}
-                className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 min-w-[90px] py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === 'apk'
                     ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs font-black'
                     : 'hover:text-slate-900 dark:hover:text-white'
@@ -202,7 +274,7 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('pwa')}
-                className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 min-w-[90px] py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === 'pwa'
                     ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs font-black'
                     : 'hover:text-slate-900 dark:hover:text-white'
@@ -212,17 +284,17 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('ios')}
-                className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 min-w-[90px] py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === 'ios'
                     ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-xs font-black'
                     : 'hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Share2 className="w-3.5 h-3.5" /> iPhone / iPad
+                <Share2 className="w-3.5 h-3.5" /> Apple iOS
               </button>
               <button
                 onClick={() => setActiveTab('desktop')}
-                className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 min-w-[90px] py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === 'desktop'
                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-black'
                     : 'hover:text-slate-900 dark:hover:text-white'
@@ -231,6 +303,38 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
                 <Laptop className="w-3.5 h-3.5" /> PC / Laptop
               </button>
             </div>
+
+            {/* Tab 0: ZIP Source Code Instructions */}
+            {activeTab === 'zip' && (
+              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
+                <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  How to Use the Project ZIP Archive:
+                </h4>
+                <div className="space-y-2 text-slate-700 dark:text-slate-300">
+                  <div className="flex items-start gap-2.5">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] shrink-0 mt-0.5">1</span>
+                    <p>Click <strong>"Download App ZIP Archive Directly"</strong> to save the complete project bundle.</p>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] shrink-0 mt-0.5">2</span>
+                    <div>
+                      <p className="font-semibold">To run locally on your PC / Mac:</p>
+                      <div className="p-2 mt-1 rounded-lg bg-slate-900 text-slate-100 font-mono text-[11px] space-y-0.5">
+                        <p className="text-emerald-400"># 1. Extract the zip file</p>
+                        <p className="text-slate-300">unzip LittleRosesEduHub-v2.0-source.zip</p>
+                        <p className="text-emerald-400 mt-1"># 2. Install dependencies & start server</p>
+                        <p className="text-slate-300">npm install</p>
+                        <p className="text-slate-300">npm run dev</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] shrink-0 mt-0.5">3</span>
+                    <p>You can also export a fresh ZIP at any time from Google AI Studio by clicking the <strong>Settings (⚙️) menu &gt; Export to ZIP</strong>.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Tab 1: APK Instructions */}
             {activeTab === 'apk' && (

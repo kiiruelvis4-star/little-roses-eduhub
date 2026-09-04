@@ -9,18 +9,68 @@ import {
 /**
  * OFFICIAL SYSTEM AUTHENTICATION & ACCESS CONTROL CONFIG
  */
+export const OFFICIAL_ADMIN_PASSWORD = 'LRA.2025';
+
+export const OFFICIAL_TEACHER_PASSWORDS: Record<string, string> = {
+  elvis: 'Elv!s#2026@LRA',
+  fresiah: 'Fr3sh!2026#LRA',
+  kelvin: 'K3lv!n$2026@LRA',
+  liz: 'L!zzy%2026#LRA',
+  'tr-elvis': 'Elv!s#2026@LRA',
+  'tr-fresiah': 'Fr3sh!2026#LRA',
+  'tr-kelvin': 'K3lv!n$2026@LRA',
+  'tr-liz': 'L!zzy%2026#LRA'
+};
+
 export const ADMIN_AUTH_CONFIG = {
   masterPassword: 'LRA.2025',
   canEditTimetable: true
 };
 
 export const TEACHER_AUTH_CONFIG = {
-  password: 'LRA,@2026',
+  password: 'Elv!s#2026@LRA', // default individual fallback
   canEditTimetable: false
 };
 
 export const MASTER_ADMIN_PASSWORD = ADMIN_AUTH_CONFIG.masterPassword;
-export const MASTER_TEACHER_PASSWORD = TEACHER_AUTH_CONFIG.password;
+export const MASTER_TEACHER_PASSWORD = 'Elv!s#2026@LRA';
+
+export const ROLES_AND_PERMISSIONS = {
+  ADMIN: {
+    password: 'LRA.2025',
+    permissions: {
+      textbooksAndResources: 'WRITE' as const,
+      timetableOverrides: 'WRITE' as const,
+      systemSettings: 'WRITE' as const
+    }
+  },
+  TEACHERS: {
+    passwords: {
+      elvis: 'Elv!s#2026@LRA',
+      fresiah: 'Fr3sh!2026#LRA',
+      kelvin: 'K3lv!n$2026@LRA',
+      liz: 'L!zzy%2026#LRA'
+    },
+    permissions: {
+      textbooksAndResources: 'READ_ONLY' as const,
+      timetableOverrides: 'READ_ONLY' as const,
+      personalDashboard: 'READ_WRITE' as const
+    }
+  }
+};
+
+export const RESOURCE_INPUT_TYPES = [
+  {
+    type: 'PDF_ATTACHMENT',
+    allowedExtensions: ['.pdf'],
+    maxFileSizeMB: 50
+  },
+  {
+    type: 'RAW_TEXT_AI_COPY',
+    format: 'markdown',
+    supportFormattedNotes: true
+  }
+] as const;
 
 export interface TimeSlotConfig {
   id: number;

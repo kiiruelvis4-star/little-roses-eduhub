@@ -152,6 +152,13 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             </span>
           </div>
 
+          <div className="p-2.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 text-[11px] flex items-center justify-between text-emerald-900 dark:text-emerald-300">
+            <span className="font-medium">Admin Master Access Key:</span>
+            <span className="font-mono font-bold bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400">
+              LRA.2025
+            </span>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex items-center gap-2 pt-2">
             <button

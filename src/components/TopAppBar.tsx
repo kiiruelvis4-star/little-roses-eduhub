@@ -10,7 +10,8 @@ import {
   GraduationCap,
   Sun,
   Moon,
-  ShieldCheck
+  ShieldCheck,
+  Clock
 } from 'lucide-react';
 import { SchoolLogo } from './SchoolLogo';
 import { Menu3DotsModal } from './common/Menu3DotsModal';
@@ -50,9 +51,24 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   onOpenNotices
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [timeString, setTimeString] = useState<string>('');
   const [systemSchoolName, setSystemSchoolName] = useState(() => {
     return storage.getSystemConfig().school_metadata.school_name || 'Little Roses Academy';
   });
+
+  // Real-time device clock syncing with clockSettings: HH:MM:SS, displaySeconds: true, device_local_time
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      setTimeString(`${hours}:${minutes}:${seconds}`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -140,8 +156,21 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             </div>
           </div>
 
-          {/* Right: Notifications, Theme Toggle & 3-Dot Menu */}
+          {/* Right: Clock, Notifications, Theme Toggle & 3-Dot Menu */}
           <div className="flex items-center gap-2">
+            {/* Synchronized Device Local Time Clock & v2.0.0 Badge */}
+            <div 
+              id="device-live-clock-pill"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-xs shadow-2xs select-none"
+              title="Synchronized Device Local Time (HH:MM:SS) • Little Roses EduHub v2.0.0"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold tracking-wider">{timeString || '00:00:00'}</span>
+              <span className="text-[10px] font-sans font-semibold text-slate-400 dark:text-slate-500 border-l border-slate-300 dark:border-slate-600 pl-1.5">
+                v2.0.0
+              </span>
+            </div>
+
             {onOpenNotices && (
               <button
                 onClick={onOpenNotices}

@@ -16,7 +16,7 @@ import {
 } from '../../types';
 import { getRationalizedSubjectsForGrade } from '../../data/cbeRationalizedCurriculumData';
 import { storage } from '../../services/storageService';
-import { X, Save, Plus, Trash2, Paperclip, UploadCloud, Sparkles } from 'lucide-react';
+import { X, Save, Plus, Trash2, Paperclip, UploadCloud, Sparkles, ShieldCheck, FileText } from 'lucide-react';
 
 export type CRUDModalType = 
   | 'scheme' 
@@ -33,6 +33,8 @@ interface TeacherCRUDModalProps {
   type: CRUDModalType;
   initialData?: any;
   onClose: () => void;
+  isOpen?: boolean;
+  onSave?: () => void;
 }
 
 const GRADES: GradeLevel[] = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
@@ -41,9 +43,11 @@ const TERMS: TermName[] = ['Term 1', 'Term 2', 'Term 3'];
 export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
   type,
   initialData,
-  onClose
+  onClose,
+  isOpen,
+  onSave
 }) => {
-  if (!type) return null;
+  if (isOpen === false || !type) return null;
 
   // Form states based on modal type
   // 1. SCHEME
@@ -98,6 +102,16 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
   const [resTitle, setResTitle] = useState(initialData?.title || '');
   const [resDesc, setResDesc] = useState(initialData?.description || '');
   const [resCategory, setResCategory] = useState(initialData?.category || 'Textbook');
+  const [resInputType, setResInputType] = useState<'PDF_ATTACHMENT' | 'RAW_TEXT_AI_COPY'>(initialData?.inputType || 'PDF_ATTACHMENT');
+  const [resFileName, setResFileName] = useState<string>(initialData?.fileName || '');
+  const [resFileSize, setResFileSize] = useState<string>(initialData?.fileSize || '3.2 MB');
+  const [resPdfDataUrl, setResPdfDataUrl] = useState<string>(initialData?.pdfDataUrl || '');
+  const [resFileError, setResFileError] = useState<string | null>(null);
+  const [resMarkdown, setResMarkdown] = useState<string>(initialData?.markdownContent || '');
+  const [resPreviewMode, setResPreviewMode] = useState<boolean>(false);
+  const [adminAuthInput, setAdminAuthInput] = useState<string>('');
+  const [adminAuthError, setAdminAuthError] = useState<string | null>(null);
+  const [isUnlockedAdmin, setIsUnlockedAdmin] = useState<boolean>(storage.isAdminAuthenticated());
 
   // 7. CALENDAR EVENT
   const [eventTitle, setEventTitle] = useState(initialData?.title || '');
@@ -199,9 +213,15 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
         grade: schemeGrade,
         category: resCategory,
         description: resDesc || 'Comprehensive curriculum support material and practice problems.',
-        fileSize: '4.8 MB',
+        fileType: resInputType === 'PDF_ATTACHMENT' ? 'pdf' : 'markdown',
+        inputType: resInputType,
+        fileName: resFileName || (resInputType === 'PDF_ATTACHMENT' ? `${resTitle.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf` : undefined),
+        fileSize: resInputType === 'PDF_ATTACHMENT' ? resFileSize : `${Math.max(1, Math.ceil((resMarkdown.length || 200) / 1024))} KB`,
+        pdfDataUrl: resPdfDataUrl,
+        markdownContent: resInputType === 'RAW_TEXT_AI_COPY' ? resMarkdown : undefined,
         uploadedAt: new Date().toISOString().slice(0, 10),
-        downloadUrl: '#'
+        downloadUrl: '#',
+        authorRole: 'ADMIN'
       };
       storage.saveResource(res);
     } else if (type === 'event') {
@@ -235,6 +255,7 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
       storage.saveStudent(newStudent);
     }
 
+    onSave?.();
     onClose();
   };
 
@@ -733,17 +754,145 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
 
           {/* TYPE: RESOURCE */}
           {type === 'resource' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Permission Banner for Textbooks & Resources */}
+              {!isUnlockedAdmin ? (
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                    <div className="text-xs">
+                      <p className="font-bold text-amber-900 dark:text-amber-200">
+                        Official Curriculum Resources • Staff: READ_ONLY | Admin: WRITE
+                      </p>
+                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                        Publishing official school materials requires Administrator WRITE clearance. Enter the Admin Key (<span className="font-mono font-bold">LRA.2025</span>) to unlock publishing.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="password"
+                      placeholder="Admin Master Key (e.g. LRA.2025)"
+                      value={adminAuthInput}
+                      onChange={(e) => {
+                        setAdminAuthInput(e.target.value);
+                        setAdminAuthError(null);
+                      }}
+                      className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-lg text-xs font-mono flex-1 text-slate-900 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (storage.verifyAdminPassword(adminAuthInput)) {
+                          setIsUnlockedAdmin(true);
+                          storage.setAdminAuthenticated(true);
+                          setAdminAuthError(null);
+                        } else {
+                          setAdminAuthError('Invalid Admin Key. Enter LRA.2025');
+                        }
+                      }}
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all"
+                    >
+                      Unlock WRITE
+                    </button>
+                  </div>
+                  {adminAuthError && (
+                    <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{adminAuthError}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs flex items-center justify-between text-emerald-900 dark:text-emerald-300">
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" /> Admin WRITE Clearance Unlocked
+                  </span>
+                  <span className="text-[10px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-emerald-300">
+                    Permissions: WRITE
+                  </span>
+                </div>
+              )}
+
+              {/* Resource Input Type Switcher */}
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5 text-xs">
+                  Resource Input Type
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setResInputType('PDF_ATTACHMENT')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-start transition-all ${
+                      resInputType === 'PDF_ATTACHMENT'
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <span>PDF Attachment</span>
+                    </div>
+                    <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 mt-0.5">
+                      Allowed: .pdf • Max: 50 MB
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setResInputType('RAW_TEXT_AI_COPY')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-start transition-all ${
+                      resInputType === 'RAW_TEXT_AI_COPY'
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-indigo-600" />
+                      <span>Raw Text / AI Copy</span>
+                    </div>
+                    <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 mt-0.5">
+                      Format: Markdown • Formatted Notes
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Resource Title</label>
                 <input
                   type="text"
-                  placeholder="e.g. Grade 6 CBC Agriculture Revision Notes"
+                  placeholder="e.g. Grade 6 CBC Agriculture Revision Guide"
                   value={resTitle}
                   onChange={(e) => setResTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-white"
                   required
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Grade</label>
+                  <select
+                    value={schemeGrade}
+                    onChange={(e) => setSchemeGrade(e.target.value as GradeLevel)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                  >
+                    {GRADES.map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Subject</label>
+                  <select
+                    value={schemeSubject}
+                    onChange={(e) => setSchemeSubject(e.target.value as SubjectName)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                  >
+                    {STANDARD_SUBJECTS.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -751,7 +900,7 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
                 <select
                   value={resCategory}
                   onChange={(e) => setResCategory(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-white"
                 >
                   <option value="Textbook">Textbook</option>
                   <option value="Revision Paper">Revision Paper / Model Exam</option>
@@ -764,22 +913,148 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Description & Topics Covered</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={resDesc}
                   onChange={(e) => setResDesc(e.target.value)}
-                  placeholder="Summary of chapters or topics included..."
-                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl"
+                  placeholder="Summary of chapters, competencies, or topics included..."
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
-                <UploadCloud className="w-8 h-8 text-blue-600 mx-auto mb-1" />
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Select PDF, Word, or Image File</p>
-                <input
-                  type="file"
-                  className="text-xs text-slate-500 mt-2 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-900 file:text-white"
-                />
-              </div>
+              {/* Conditional Input Fields based on inputType */}
+              {resInputType === 'PDF_ATTACHMENT' ? (
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-2">
+                  <UploadCloud className="w-8 h-8 text-blue-600 mx-auto" />
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Upload Official PDF Document
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Maximum file size: <span className="font-bold">50 MB</span> • Allowed extension: <span className="font-mono font-bold">.pdf</span>
+                  </p>
+                  <input
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    onChange={(e) => {
+                      setResFileError(null);
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      if (!file.name.toLowerCase().endsWith('.pdf')) {
+                        setResFileError('Invalid file format: Only .pdf documents are allowed.');
+                        return;
+                      }
+
+                      const sizeMB = file.size / (1024 * 1024);
+                      if (sizeMB > 50) {
+                        setResFileError(`File size exceeds 50 MB limit (${sizeMB.toFixed(1)} MB selected).`);
+                        return;
+                      }
+
+                      setResFileName(file.name);
+                      setResFileSize(sizeMB < 1 ? `${Math.round(file.size / 1024)} KB` : `${sizeMB.toFixed(1)} MB`);
+
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setResPdfDataUrl(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    className="text-xs text-slate-500 mt-2 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-900 file:text-white cursor-pointer"
+                  />
+
+                  {resFileName && !resFileError && (
+                    <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-800 dark:text-emerald-200 text-xs flex items-center justify-between font-mono">
+                      <span>📄 {resFileName}</span>
+                      <span className="font-bold">{resFileSize}</span>
+                    </div>
+                  )}
+
+                  {resFileError && (
+                    <div className="mt-2 p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-700 dark:text-rose-300 text-xs font-bold">
+                      {resFileError}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* RAW_TEXT_AI_COPY (Markdown with Formatted Notes Support) */
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block text-xs flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Markdown Content (Formatted Notes Supported)</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cbeNote = `# CBC Rationalized Notes: ${schemeSubject}
+**Grade**: ${schemeGrade} • **Term**: ${schemeTerm} • **Little Roses Academy**
+
+---
+
+### Specific Learning Outcomes:
+By the end of this lesson, the learner should be able to:
+1. Identify and explain key concepts in real-life contexts.
+2. Demonstrate collaborative problem-solving skills.
+3. Apply values of integrity, responsibility, and environmental stewardship.
+
+---
+
+### Core Competencies:
+- **Critical Thinking & Problem Solving**
+- **Digital Literacy & Communication**
+- **Learning to Learn**
+
+---
+
+### Key Inquiry Questions:
+- *How does this concept solve challenges in our local Nakuru community?*
+
+---
+
+### Summary Table of Findings:
+| Key Topic | Description | Practical Application |
+| :--- | :--- | :--- |
+| Concept 1 | Theoretical foundation | Applied in classroom activity |
+| Concept 2 | Observation & recording | Field practice & projects |
+
+---
+
+### Reflection & Self-Assessment:
+Learners successfully applied core skills during group practicals.`;
+                          setResMarkdown(cbeNote);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 text-[11px] font-bold border border-indigo-200 dark:border-indigo-800 transition-colors"
+                      >
+                        + Insert CBC Notes Template
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setResPreviewMode(!resPreviewMode)}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold"
+                      >
+                        {resPreviewMode ? 'Edit Raw Text' : 'Preview Formatted'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {resPreviewMode ? (
+                    <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl max-h-60 overflow-y-auto prose dark:prose-invert prose-xs text-xs font-sans">
+                      <pre className="whitespace-pre-wrap font-sans text-slate-800 dark:text-slate-200 leading-relaxed">
+                        {resMarkdown || 'No markdown content entered yet.'}
+                      </pre>
+                    </div>
+                  ) : (
+                    <textarea
+                      rows={6}
+                      value={resMarkdown}
+                      onChange={(e) => setResMarkdown(e.target.value)}
+                      placeholder="# Enter Markdown / Raw Text AI Notes here...&#10;&#10;## Key Concept&#10;- Sub-bullet 1&#10;- Sub-bullet 2&#10;&#10;| Column 1 | Column 2 |&#10;| --- | --- |"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    />
+                  )}
+                </div>
+              )}
             </div>
           )}
 

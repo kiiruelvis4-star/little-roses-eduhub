@@ -132,6 +132,7 @@ export type AdminTab =
   | 'staff'
   | 'learners'
   | 'curriculum'
+  | 'resources'
   | 'timetable'
   | 'notices'
   | 'settings';
@@ -254,11 +255,16 @@ export interface ResourceItem {
   grade: GradeLevel;
   subject: SubjectName;
   category: 'Textbook' | 'Revision Paper' | 'Teaching Aid' | 'Lesson Notes' | 'Video Guide' | string;
-  fileType?: 'pdf' | 'doc' | 'image' | 'video' | 'link';
+  fileType?: 'pdf' | 'doc' | 'image' | 'video' | 'link' | 'markdown';
+  inputType?: 'PDF_ATTACHMENT' | 'RAW_TEXT_AI_COPY';
   fileSize: string;
   description: string;
   downloadUrl?: string;
   uploadedAt: string;
+  fileName?: string;
+  pdfDataUrl?: string;
+  markdownContent?: string;
+  authorRole?: 'ADMIN' | 'TEACHER';
 }
 
 export interface TimetableSlot {
@@ -341,7 +347,55 @@ export interface SchoolMetadata {
   county?: string;
 }
 
+export interface ClockSettings {
+  displaySeconds: boolean;
+  format: 'HH:MM:SS' | string;
+  syncSource: 'device_local_time' | string;
+}
+
+export interface AdminPermissions {
+  textbooksAndResources: 'WRITE' | 'READ_ONLY';
+  timetableOverrides: 'WRITE' | 'READ_ONLY';
+  systemSettings: 'WRITE' | 'READ_ONLY';
+}
+
+export interface TeacherPermissions {
+  textbooksAndResources: 'READ_ONLY' | 'WRITE';
+  timetableOverrides: 'READ_ONLY' | 'WRITE';
+  personalDashboard: 'READ_WRITE' | 'READ_ONLY';
+}
+
+export interface RolesAndPermissionsConfig {
+  ADMIN: {
+    password: string;
+    permissions: AdminPermissions;
+  };
+  TEACHERS: {
+    passwords: {
+      elvis: string;
+      fresiah: string;
+      kelvin: string;
+      liz: string;
+      [key: string]: string;
+    };
+    permissions: TeacherPermissions;
+  };
+}
+
+export interface ResourceInputTypeConfig {
+  type: 'PDF_ATTACHMENT' | 'RAW_TEXT_AI_COPY' | string;
+  allowedExtensions?: string[];
+  maxFileSizeMB?: number;
+  format?: 'markdown' | string;
+  supportFormattedNotes?: boolean;
+}
+
 export interface SystemConfig {
+  appName?: string;
+  version?: string;
+  clockSettings?: ClockSettings;
+  rolesAndPermissions?: RolesAndPermissionsConfig;
+  resourceInputTypes?: ResourceInputTypeConfig[];
   framework?: string;
   current_date?: string;
   academic_year?: number;

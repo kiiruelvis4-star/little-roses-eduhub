@@ -55,7 +55,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
     setIsVerifying(true);
 
     setTimeout(() => {
-      if (storage.verifyTeacherPassword(password)) {
+      if (storage.verifyTeacherPassword(password, selectedTeacher.id)) {
         storage.setAuthenticatedTeacherId(selectedTeacher.id);
         storage.setTeacherAuthenticated(true);
         setIsVerifying(false);
@@ -64,7 +64,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
         onSuccess(selectedTeacher);
       } else {
         setIsVerifying(false);
-        setError('Invalid staff password. Please enter the authorized Little Roses staff key.');
+        setError(`Invalid credentials for ${selectedTeacher.name}. Please enter their assigned faculty password.`);
       }
     }, 200);
   };
@@ -188,7 +188,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                   className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
                 >
                   <KeyRound className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                  <span>2. Master Staff Password</span>
+                  <span>2. Password for {selectedTeacher.name}</span>
                 </label>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   Confidential Access
@@ -207,7 +207,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                     setPassword(e.target.value);
                     setError(null);
                   }}
-                  placeholder="Enter staff master password"
+                  placeholder={`Enter password for ${selectedTeacher.name}`}
                   className={`w-full pl-9 pr-10 py-2.5 rounded-xl border text-sm font-mono tracking-wide focus:outline-hidden focus:ring-2 transition-colors bg-white dark:bg-slate-800 text-slate-900 dark:text-white ${
                     error
                       ? 'border-rose-300 dark:border-rose-800 focus:border-rose-500 focus:ring-rose-500/20'
@@ -231,6 +231,28 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
                   <ShieldCheck className="w-3.5 h-3.5" /> Verified Staff Portal
                 </span>
+              </div>
+
+              {/* Faculty Credentials Reference helper */}
+              <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-750 text-[11px] text-slate-600 dark:text-slate-300">
+                <div className="flex items-center justify-between font-bold text-slate-700 dark:text-slate-200 mb-1">
+                  <span>Assigned Faculty Credentials (v2.0.0):</span>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-mono">Official Roster</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 font-mono text-[10px]">
+                  <div className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">MR ELVIS:</span> <span className="text-blue-600 dark:text-blue-400">Elv!s#2026@LRA</span>
+                  </div>
+                  <div className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">MADAM FRESIAH:</span> <span className="text-blue-600 dark:text-blue-400">Fr3sh!2026#LRA</span>
+                  </div>
+                  <div className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">MR KELVIN:</span> <span className="text-blue-600 dark:text-blue-400">K3lv!n$2026@LRA</span>
+                  </div>
+                  <div className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">MADAM LIZ:</span> <span className="text-blue-600 dark:text-blue-400">L!zzy%2026#LRA</span>
+                  </div>
+                </div>
               </div>
             </div>
 

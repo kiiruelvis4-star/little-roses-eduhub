@@ -549,14 +549,17 @@ export const INITIAL_QUIZZES: Quiz[] = [
 export const INITIAL_RESOURCES: ResourceItem[] = [
   {
     id: 'res-01',
-    title: 'CBC Grade 6 Science & Technology Complete Curriculum Guide',
+    title: 'CBC Grade 6 Science & Technology Official Curriculum Guide',
     grade: 'Grade 6',
     subject: 'Science',
     category: 'Textbook',
     fileType: 'pdf',
+    inputType: 'PDF_ATTACHMENT',
+    fileName: 'CBC_Grade_6_Science_Official_Curriculum_Guide.pdf',
     fileSize: '4.8 MB',
     description: 'Official KICD approved Grade 6 CBC Science curriculum modules, experiments, and competency frameworks.',
-    uploadedAt: '2026-01-10'
+    uploadedAt: '2026-01-10',
+    authorRole: 'ADMIN'
   },
   {
     id: 'res-02',
@@ -565,31 +568,105 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     subject: 'Mathematics',
     category: 'Revision Paper',
     fileType: 'pdf',
+    inputType: 'PDF_ATTACHMENT',
+    fileName: 'Grade_6_Mathematics_Term1_Term2_CAT_Papers.pdf',
     fileSize: '2.2 MB',
     description: 'Past examination papers with complete worked step-by-step marking schemes for Term 1 and 2.',
-    uploadedAt: '2026-01-20'
+    uploadedAt: '2026-01-20',
+    authorRole: 'ADMIN'
   },
   {
     id: 'res-03',
-    title: 'Agriculture & Nutrition Field Guide: Soil Sampling in Nakuru County',
+    title: 'CBE Science & Technology: Human Circulatory & Digestive System Notes',
     grade: 'Grade 6',
-    subject: 'Agriculture',
-    category: 'Teaching Aid',
-    fileType: 'pdf',
-    fileSize: '3.1 MB',
-    description: 'Illustrated guide on conducting soil texture, pH, and organic compost trials in school gardens.',
-    uploadedAt: '2026-01-28'
+    subject: 'Science',
+    category: 'Lesson Notes',
+    fileType: 'markdown',
+    inputType: 'RAW_TEXT_AI_COPY',
+    fileSize: '18 KB',
+    description: 'Comprehensive markdown formatted revision notes covering heart chambers, blood vessels, and dietary digestion pathways.',
+    uploadedAt: '2026-02-02',
+    authorRole: 'ADMIN',
+    markdownContent: `# Human Circulatory & Respiratory Systems
+**Subject**: Science & Technology • **Grade**: Grade 6 • **Term**: Term 1
+
+---
+
+### Core Competencies Addressed:
+- *Critical thinking and problem solving* in distinguishing oxygenated and deoxygenated pathways.
+- *Digital literacy and communication* in explaining biological processes.
+
+---
+
+## 1. The Human Heart Structure
+The heart is a muscular organ that pumps blood throughout the body. It consists of four distinct chambers:
+1. **Right Atrium**: Receives deoxygenated blood returning from bodily tissues via the *Vena Cava*.
+2. **Right Ventricle**: Pumps deoxygenated blood into the *Pulmonary Artery* toward the lungs.
+3. **Left Atrium**: Receives fresh, oxygenated blood from the lungs via the *Pulmonary Veins*.
+4. **Left Ventricle**: The thickest muscular chamber; pumps oxygen-rich blood into the *Aorta* for systemic distribution.
+
+> **Key Rule**: All arteries carry oxygenated blood away from the heart *except* the Pulmonary Artery. All veins carry deoxygenated blood toward the heart *except* the Pulmonary Vein.
+
+---
+
+## 2. Components of Human Blood
+
+| Component | Primary Function | Distinct Characteristic |
+| :--- | :--- | :--- |
+| **Red Blood Cells (Erythrocytes)** | Carries oxygen bound to hemoglobin | Biconcave disc shape, no nucleus |
+| **White Blood Cells (Leukocytes)** | Fights off pathogens and infections | Irregular shape, contains large nucleus |
+| **Platelets (Thrombocytes)** | Essential for blood clotting at open wounds | Cellular fragments |
+| **Blood Plasma** | Liquid medium transporting nutrients, hormones & urea | 90% water with dissolved proteins |
+
+---
+
+## 3. Class Inquiry Exercise
+1. Why is the muscular wall of the left ventricle significantly thicker than that of the right ventricle?
+2. Explain the vital role played by blood platelets when a learner grazes their knee on the sports pitch.`
   },
   {
     id: 'res-04',
-    title: 'Creative Arts & Music: Kenyan Traditional Folk Songs Collection',
-    grade: 'Grade 5',
-    subject: 'Creative Arts',
-    category: 'Lesson Notes',
-    fileType: 'doc',
-    fileSize: '1.7 MB',
-    description: 'Lyrics, cultural significance, and dance notations for National Music Festival repertoire.',
-    uploadedAt: '2026-02-05'
+    title: 'Agriculture & Environmental Conservation: Soil Erosion Control Handbook',
+    grade: 'Grade 6',
+    subject: 'Agriculture',
+    category: 'Teaching Aid',
+    fileType: 'markdown',
+    inputType: 'RAW_TEXT_AI_COPY',
+    fileSize: '24 KB',
+    description: 'Formatted field guide on constructing contour terraces, trash lines, and gabions for soil conservation in Nakuru agricultural zones.',
+    uploadedAt: '2026-02-12',
+    authorRole: 'ADMIN',
+    markdownContent: `# Soil Conservation & Water Harvesting Field Guide
+**Subject**: Agriculture & Nutrition • **Grade**: Grade 6 • **Ecological Zone**: Rift Valley / Nakuru County
+
+---
+
+## 1. Major Causes of Soil Erosion
+- **Water Runoff**: High velocity storm water carrying away loose topsoil on slopes.
+- **Wind Velocity**: Dry season winds stripping fine organic particles from bare land.
+- **Human Activities**: Overgrazing, burning crop residues, and improper plowing across contours.
+
+---
+
+## 2. Physical & Biological Conservation Methods
+### A. Contour Terracing
+- Excavating trenches along measured contour lines to slow down downhill water flow.
+- Traps sediment while allowing moisture to infiltrate root zones.
+
+### B. Trash Lines & Mulching
+- Laying maize stalks and dry vegetative matter along field contours.
+- Provides immediate organic ground cover and encourages earthworm activity.
+
+### C. Check Dams & Gabions
+- Wire mesh cages filled with stones positioned across active gullies.
+- Traps soil silt during heavy downpours and re-levels eroded drainage ways.
+
+---
+
+## 3. Practical Field Assessment Checklist
+- [x] Identify slope gradient using an A-frame level.
+- [x] Dig vetiver grass planting furrows along contour ridges.
+- [x] Record soil depth before and after heavy rainfall events.`
   },
   {
     id: 'res-05',
@@ -598,9 +675,12 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     subject: 'Kiswahili',
     category: 'Revision Paper',
     fileType: 'pdf',
+    inputType: 'PDF_ATTACHMENT',
+    fileName: 'Kiswahili_Sarufi_na_Ushairi_Mwongozo_G6.pdf',
     fileSize: '2.9 MB',
-    description: 'Muhtasari wa ngeli za nomino, vitenzi, semi na methali zenye mifano kamili.',
-    uploadedAt: '2026-02-14'
+    description: 'Muhtasari wa ngeli za nomino, vitenzi, semi na methali zenye mifano kamili ya KPSEA.',
+    uploadedAt: '2026-02-14',
+    authorRole: 'ADMIN'
   }
 ];
 

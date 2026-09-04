@@ -6,6 +6,48 @@ import {
 } from '../types';
 
 export const INITIAL_SYSTEM_CONFIG: SystemConfig = {
+  appName: "Little Roses EduHub",
+  version: "2.0.0",
+  clockSettings: {
+    displaySeconds: true,
+    format: "HH:MM:SS",
+    syncSource: "device_local_time"
+  },
+  rolesAndPermissions: {
+    ADMIN: {
+      password: "LRA.2025",
+      permissions: {
+        textbooksAndResources: "WRITE",
+        timetableOverrides: "WRITE",
+        systemSettings: "WRITE"
+      }
+    },
+    TEACHERS: {
+      passwords: {
+        elvis: "Elv!s#2026@LRA",
+        fresiah: "Fr3sh!2026#LRA",
+        kelvin: "K3lv!n$2026@LRA",
+        liz: "L!zzy%2026#LRA"
+      },
+      permissions: {
+        textbooksAndResources: "READ_ONLY",
+        timetableOverrides: "READ_ONLY",
+        personalDashboard: "READ_WRITE"
+      }
+    }
+  },
+  resourceInputTypes: [
+    {
+      type: "PDF_ATTACHMENT",
+      allowedExtensions: [".pdf"],
+      maxFileSizeMB: 50
+    },
+    {
+      type: "RAW_TEXT_AI_COPY",
+      format: "markdown",
+      supportFormattedNotes: true
+    }
+  ],
   framework: "Revised / Rationalized Competency-Based Education (CBE)",
   current_date: "2026-09-02T19:23:00",
   academic_year: 2026,

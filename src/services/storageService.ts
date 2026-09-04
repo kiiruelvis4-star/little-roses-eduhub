@@ -43,7 +43,11 @@ import {
   MASTER_TEACHER_PASSWORD,
   MASTER_ADMIN_PASSWORD,
   ADMIN_AUTH_CONFIG,
-  TEACHER_AUTH_CONFIG
+  TEACHER_AUTH_CONFIG,
+  OFFICIAL_ADMIN_PASSWORD,
+  OFFICIAL_TEACHER_PASSWORDS,
+  ROLES_AND_PERMISSIONS,
+  RESOURCE_INPUT_TYPES
 } from '../data/teacherTimetableData';
 import {
   INITIAL_SYSTEM_CONFIG,
@@ -472,18 +476,37 @@ class StorageService {
     return profiles[0] || TEACHER_PROFILES[0];
   }
 
-  public verifyTeacherPassword(password?: string): boolean {
+  public verifyTeacherPassword(password?: string, teacherId?: string): boolean {
     if (!password || !password.trim()) return false;
-    const clean = password.trim().replace(/[\s,]/g, '').toLowerCase();
+    const clean = password.trim();
+
+    // 1. If teacherId is specified, check against that teacher's exact password
+    if (teacherId) {
+      const normalizedId = teacherId.toLowerCase().replace('tr-', '');
+      const expectedPassword = OFFICIAL_TEACHER_PASSWORDS[normalizedId] || OFFICIAL_TEACHER_PASSWORDS[`tr-${normalizedId}`];
+      if (expectedPassword && clean === expectedPassword) {
+        return true;
+      }
+    }
+
+    // 2. Also check if matches any teacher password in OFFICIAL_TEACHER_PASSWORDS
+    for (const p of Object.values(OFFICIAL_TEACHER_PASSWORDS)) {
+      if (clean === p) return true;
+    }
+
+    // 3. Fallback checks for backward compatibility
+    const cleanLower = clean.replace(/[\s,]/g, '').toLowerCase();
     const masterClean = MASTER_TEACHER_PASSWORD.replace(/[\s,]/g, '').toLowerCase();
-    return clean === masterClean || clean === 'lra@2026' || clean === 'lra2026';
+    return cleanLower === masterClean || cleanLower === 'lra@2026' || cleanLower === 'lra2026';
   }
 
   public verifyAdminPassword(password?: string): boolean {
     if (!password || !password.trim()) return false;
-    const clean = password.trim().replace(/[\s.]/g, '').toLowerCase();
-    const masterClean = MASTER_ADMIN_PASSWORD.replace(/[\s.]/g, '').toLowerCase();
-    return clean === masterClean || clean === 'lra2025' || clean === 'lra@2025';
+    const clean = password.trim();
+    if (clean === OFFICIAL_ADMIN_PASSWORD) return true;
+    const cleanLower = clean.replace(/[\s.]/g, '').toLowerCase();
+    const masterClean = OFFICIAL_ADMIN_PASSWORD.replace(/[\s.]/g, '').toLowerCase();
+    return cleanLower === masterClean || cleanLower === 'lra2025' || cleanLower === 'lra@2025';
   }
 
   public isTeacherAuthenticated(): boolean {
@@ -527,9 +550,43 @@ class StorageService {
   }
 
   public canEditTimetable(role: 'admin' | 'teacher' | 'learner', isAdminOverride?: boolean): boolean {
-    if (role === 'admin' || isAdminOverride) return ADMIN_AUTH_CONFIG.canEditTimetable; // true
-    if (role === 'teacher') return TEACHER_AUTH_CONFIG.canEditTimetable; // false
+    if (role === 'admin' || isAdminOverride || this.isAdminAuthenticated()) return true;
+    // Teachers have READ_ONLY for timetableOverrides
     return false;
+  }
+
+  public canWriteResources(role: 'admin' | 'teacher' | 'learner', isAdminOverride?: boolean): boolean {
+    if (role === 'admin' || isAdminOverride || this.isAdminAuthenticated()) return true;
+    // Teachers have READ_ONLY for textbooksAndResources
+    return false;
+  }
+
+  public getRolePermissions(role: 'admin' | 'teacher' | 'learner') {
+    const sys = this.getSystemConfig();
+    if (role === 'admin') {
+      return sys.rolesAndPermissions?.ADMIN?.permissions || ROLES_AND_PERMISSIONS.ADMIN.permissions;
+    }
+    if (role === 'teacher') {
+      return sys.rolesAndPermissions?.TEACHERS?.permissions || ROLES_AND_PERMISSIONS.TEACHERS.permissions;
+    }
+    return {
+      textbooksAndResources: 'READ_ONLY' as const,
+      timetableOverrides: 'READ_ONLY' as const
+    };
+  }
+
+  public getClockSettings() {
+    const sys = this.getSystemConfig();
+    return sys.clockSettings || {
+      displaySeconds: true,
+      format: 'HH:MM:SS',
+      syncSource: 'device_local_time'
+    };
+  }
+
+  public getResourceInputTypes() {
+    const sys = this.getSystemConfig();
+    return sys.resourceInputTypes || RESOURCE_INPUT_TYPES;
   }
 
   // Teacher-Specific Timetable Slots
@@ -549,16 +606,27 @@ class StorageService {
   // System Config & School Metadata
   public getSystemConfig(): SystemConfig {
     const cfg = this.getItem<SystemConfig>(STORAGE_KEYS.SYSTEM_CONFIG, INITIAL_SYSTEM_CONFIG);
-    // Ensure school metadata has the latest defaults if placeholder or missing po_box
-    if (!cfg.school_metadata.po_box || cfg.school_metadata.school_name === 'Editable School Name') {
-      cfg.school_metadata = {
+    return {
+      ...INITIAL_SYSTEM_CONFIG,
+      ...cfg,
+      appName: "Little Roses EduHub",
+      version: "2.0.0",
+      clockSettings: {
+        ...INITIAL_SYSTEM_CONFIG.clockSettings,
+        ...(cfg.clockSettings || {})
+      },
+      rolesAndPermissions: {
+        ...INITIAL_SYSTEM_CONFIG.rolesAndPermissions,
+        ...(cfg.rolesAndPermissions || {})
+      },
+      resourceInputTypes: INITIAL_SYSTEM_CONFIG.resourceInputTypes,
+      school_metadata: {
         ...INITIAL_SYSTEM_CONFIG.school_metadata,
-        ...cfg.school_metadata,
-        po_box: cfg.school_metadata.po_box || 'P.O. Box 3443 NAKURU',
-        school_name: (!cfg.school_metadata.school_name || cfg.school_metadata.school_name === 'Editable School Name') ? 'Little Roses Academy' : cfg.school_metadata.school_name
-      };
-    }
-    return cfg;
+        ...(cfg.school_metadata || {}),
+        po_box: cfg.school_metadata?.po_box || 'P.O. Box 3443 NAKURU',
+        school_name: (!cfg.school_metadata?.school_name || cfg.school_metadata?.school_name === 'Editable School Name') ? 'Little Roses Academy' : cfg.school_metadata.school_name
+      }
+    };
   }
 
   public saveSystemConfig(cfg: Partial<SystemConfig>): void {

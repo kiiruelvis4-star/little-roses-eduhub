@@ -1,3 +1,5 @@
+import React, { useEffect } from 'react';
+import { initAndSeedDB } from './db';
 import React, { useState, useEffect } from 'react';
 import { 
   AppScreen, 

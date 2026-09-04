@@ -16,11 +16,15 @@ import {
   UserCheck,
   BookOpen,
   Settings,
-  MapPin
+  MapPin,
+  Smartphone,
+  GitBranch,
+  FolderDown
 } from 'lucide-react';
 import { SchoolLogo } from '../SchoolLogo';
 import { storage } from '../../services/storageService';
 import { SchoolConfigModal } from '../modals/SchoolConfigModal';
+import { DownloadAppModal } from './DownloadAppModal';
 
 interface Menu3DotsModalProps {
   isOpen: boolean;
@@ -46,6 +50,7 @@ export const Menu3DotsModal: React.FC<Menu3DotsModalProps> = ({
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [syncTimestamp, setSyncTimestamp] = useState(storage.getLastSyncTime());
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [systemConfig, setSystemConfig] = useState(() => storage.getSystemConfig());
 
   if (!isOpen) return null;
@@ -344,6 +349,79 @@ export const Menu3DotsModal: React.FC<Menu3DotsModalProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Download App & GitHub Repository Hub */}
+            <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/60 dark:to-blue-950/20 rounded-xl border border-blue-200/60 dark:border-blue-900/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-600 text-white rounded-md">
+                    <FolderDown className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">Download & GitHub Repository</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Export code, download Android APK, or sync to GitHub</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">v2.0.0</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                {/* Download Android APK */}
+                <a
+                  href="/LittleRosesEduHub.apk"
+                  download="LittleRosesEduHub.apk"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-xs"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>Download APK (847 KB)</span>
+                </a>
+
+                {/* Direct App Install & Options Modal */}
+                <button
+                  onClick={() => setIsDownloadModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Install Guide & Options</span>
+                </button>
+              </div>
+
+              {/* Export Data Backup */}
+              <button
+                onClick={handleExportBackup}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all"
+              >
+                <FolderDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>Export Offline Database JSON</span>
+              </button>
+
+              {/* GitHub Path */}
+              <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 text-[11px] space-y-1.5">
+                <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <GitBranch className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    Target GitHub Repository:
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard('https://github.com/kiiruelvis4/little-roses-eduhub.git', 'gh_repo')}
+                    className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-[10px] font-bold"
+                  >
+                    {copiedKey === 'gh_repo' ? (
+                      <span className="text-emerald-600 flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3" /> Copied!</span>
+                    ) : (
+                      <span className="flex items-center gap-0.5"><Copy className="w-3 h-3" /> Copy URL</span>
+                    )}
+                  </button>
+                </div>
+                <div className="font-mono text-[10px] bg-slate-50 dark:bg-slate-950 p-1.5 rounded text-slate-600 dark:text-slate-400 break-all select-all">
+                  https://github.com/kiiruelvis4/little-roses-eduhub.git
+                </div>
+                <div className="text-[10px] text-slate-500 space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <p>• <strong>To download source ZIP:</strong> Click top-right AI Studio menu → <em>Export to ZIP</em>.</p>
+                  <p>• <strong>To push to GitHub:</strong> <code className="text-blue-600 dark:text-blue-400 font-mono">git push -u origin main</code></p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 3. Quick Portal Switcher (3 Dashboards: Teacher, Learner, Administration) */}
@@ -416,6 +494,12 @@ export const Menu3DotsModal: React.FC<Menu3DotsModalProps> = ({
         onConfigUpdated={(newCfg) => {
           setSystemConfig(newCfg);
         }}
+      />
+
+      {/* Direct App Download & Options Modal */}
+      <DownloadAppModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
       />
     </div>
   );

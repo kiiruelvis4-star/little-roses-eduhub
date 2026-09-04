@@ -85,8 +85,16 @@ const STORAGE_KEYS = {
   STAFF: 'lra_staff_members_v1',
   ACTIVE_TEACHER_ID: 'lra_active_teacher_id_v2',
   TEACHER_PROFILES: 'lra_teacher_profiles_v1',
-  MASTER_TEACHER_TIMETABLE: 'lra_master_teacher_timetable_v1'
+  MASTER_TEACHER_TIMETABLE: 'lra_master_teacher_timetable_v1',
+  RAW_SAVED_SCHEMES: 'lra_raw_saved_schemes_v1'
 };
+
+export interface RawSavedScheme {
+  id: string;
+  content: string;
+  timestamp: string;
+  teacherName: string;
+}
 
 class StorageService {
   private listeners: Set<() => void> = new Set();
@@ -263,6 +271,37 @@ class StorageService {
   public createBlankLessonPlanSheet(defaults?: Partial<BlankLessonPlanSheet>): BlankLessonPlanSheet {
     const cfg = this.getSystemConfig();
     return createBlankLessonPlanTemplate(cfg, defaults);
+  }
+
+  // Raw Scheme & Lesson Plan Quick Upload (Offline Storage)
+  public getRawSavedSchemes(): RawSavedScheme[] {
+    return this.getItem<RawSavedScheme[]>(STORAGE_KEYS.RAW_SAVED_SCHEMES, [
+      {
+        id: 'raw-sample-1',
+        content: 'Grade 5 Mathematics - Week 3:\nStrand: Numbers - Operations on Decimals\nSub-strand: Addition and subtraction of decimals up to 3 decimal places.\nSpecific Learning Outcomes: By the end of the lesson, the learner should be able to align decimal points accurately and solve real-life addition word problems.\nKey Inquiry Question: Why is the position of the decimal point vital in calculating money and measurements?',
+        timestamp: new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }),
+        teacherName: 'Teacher Elvis'
+      }
+    ]);
+  }
+
+  public saveRawScheme(content: string, teacherName: string = 'Teacher Elvis'): RawSavedScheme {
+    const list = this.getRawSavedSchemes();
+    const newItem: RawSavedScheme = {
+      id: `raw-${Date.now()}`,
+      content: content.trim(),
+      timestamp: new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }),
+      teacherName
+    };
+    this.setItem(STORAGE_KEYS.RAW_SAVED_SCHEMES, [newItem, ...list]);
+    this.notify();
+    return newItem;
+  }
+
+  public deleteRawScheme(id: string): void {
+    const list = this.getRawSavedSchemes().filter(item => item.id !== id);
+    this.setItem(STORAGE_KEYS.RAW_SAVED_SCHEMES, list);
+    this.notify();
   }
 
   // Records of Work
@@ -776,6 +815,7 @@ class StorageService {
       calendar: this.getCalendarEvents(),
       notices: this.getNotices(),
       staff: this.getStaffMembers(),
+      rawSavedSchemes: this.getRawSavedSchemes(),
       exportedAt: new Date().toISOString()
     };
     return JSON.stringify(fullState, null, 2);
@@ -801,6 +841,7 @@ class StorageService {
       if (data.calendar) this.setItem(STORAGE_KEYS.CALENDAR, data.calendar);
       if (data.notices) this.setItem(STORAGE_KEYS.NOTICES, data.notices);
       if (data.staff) this.setItem(STORAGE_KEYS.STAFF, data.staff);
+      if (data.rawSavedSchemes) this.setItem(STORAGE_KEYS.RAW_SAVED_SCHEMES, data.rawSavedSchemes);
       return true;
     } catch (e) {
       console.error('Import failed', e);

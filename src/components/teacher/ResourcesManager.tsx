@@ -75,7 +75,7 @@ export const ResourcesManager: React.FC<ResourcesManagerProps> = ({
       setShowAdminUnlockModal(false);
       setAdminPasswordInput('');
     } else {
-      setAdminUnlockError('Invalid Admin Key. Please use official admin credentials (LRA.2025).');
+      setAdminUnlockError('Invalid Administrator Key. Please enter authorized admin credentials.');
     }
   };
 
@@ -381,7 +381,7 @@ export const ResourcesManager: React.FC<ResourcesManagerProps> = ({
               <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
                 <p className="font-bold">Staff Role Constraint:</p>
                 <p className="text-[11px] mt-0.5">
-                  Teachers have READ-ONLY permission on official textbooks & resources. Enter Administrator master credentials (<span className="font-mono font-bold">LRA.2025</span>) to unlock WRITE privileges.
+                  Teachers have READ-ONLY permission on official textbooks & resources. Enter Administrator master credentials to unlock WRITE privileges.
                 </p>
               </div>
 
@@ -397,7 +397,7 @@ export const ResourcesManager: React.FC<ResourcesManagerProps> = ({
                     setAdminPasswordInput(e.target.value);
                     setAdminUnlockError(null);
                   }}
-                  placeholder="Enter admin key (LRA.2025)"
+                  placeholder="Enter administrator master key"
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-mono focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
                 />
                 {adminUnlockError && (

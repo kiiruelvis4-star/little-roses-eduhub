@@ -13,12 +13,15 @@ import {
   Clock, 
   Layers, 
   ShieldCheck, 
-  Building2 
+  Building2,
+  Download,
+  Smartphone
 } from 'lucide-react';
 import { Student, TeacherProfile } from '../types';
 import { storage } from '../services/storageService';
 import { TeacherAuthModal } from './teacher/TeacherAuthModal';
 import { AdminAuthModal } from './admin/AdminAuthModal';
+import { DownloadAppModal } from './common/DownloadAppModal';
 
 interface PortalSelectScreenProps {
   onSelectRole?: (role: 'teacher' | 'learner' | 'admin', studentId?: string) => void;
@@ -34,6 +37,7 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
   const [selectedStudentId, setSelectedStudentId] = useState(storage.getActiveStudentId());
   const [isTeacherAuthOpen, setIsTeacherAuthOpen] = useState<boolean>(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState<boolean>(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
   const sysConfig = storage.getSystemConfig();
   const poBox = sysConfig?.school_metadata?.po_box || 'P.O. Box 3443 NAKURU';
 
@@ -221,6 +225,44 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
               ))}
             </select>
           </div>
+
+          {/* Download App Directly Hero Card */}
+          <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white shadow-xl shadow-emerald-950/20 text-left border border-emerald-400/30">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-inner">
+                  <Download className="w-5 h-5 text-white animate-bounce" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-sm tracking-tight">DOWNLOAD APP DIRECTLY</span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/20 text-white uppercase">APK & PWA</span>
+                  </div>
+                  <p className="text-xs text-emerald-100 mt-0.5">
+                    Download Android APK (847 KB) or install on phone/PC for 100% offline access.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-3.5 pt-3 border-t border-white/20">
+              <a
+                href="/LittleRosesEduHub.apk"
+                download="LittleRosesEduHub.apk"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-emerald-50 text-emerald-900 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 text-center"
+              >
+                <Download className="w-4 h-4 text-emerald-700" />
+                <span>Download APK</span>
+              </a>
+              <button
+                onClick={() => setIsDownloadModalOpen(true)}
+                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-950/40 hover:bg-emerald-950/60 text-white rounded-xl font-bold text-xs border border-white/20 transition-all active:scale-95 text-center"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>Install Guide</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Feature Pills */}
@@ -269,6 +311,12 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
         isOpen={isAdminAuthOpen}
         onClose={() => setIsAdminAuthOpen(false)}
         onSuccess={handleAdminAuthSuccess}
+      />
+
+      {/* Direct App Download Modal */}
+      <DownloadAppModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
       />
     </div>
   );

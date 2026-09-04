@@ -765,14 +765,14 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
                         Official Curriculum Resources • Staff: READ_ONLY | Admin: WRITE
                       </p>
                       <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5">
-                        Publishing official school materials requires Administrator WRITE clearance. Enter the Admin Key (<span className="font-mono font-bold">LRA.2025</span>) to unlock publishing.
+                        Publishing official school materials requires Administrator WRITE clearance. Enter the Admin Master Key to unlock publishing.
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     <input
                       type="password"
-                      placeholder="Admin Master Key (e.g. LRA.2025)"
+                      placeholder="Enter Admin Master Key"
                       value={adminAuthInput}
                       onChange={(e) => {
                         setAdminAuthInput(e.target.value);
@@ -788,7 +788,7 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
                           storage.setAdminAuthenticated(true);
                           setAdminAuthError(null);
                         } else {
-                          setAdminAuthError('Invalid Admin Key. Enter LRA.2025');
+                          setAdminAuthError('Invalid Admin Key. Please enter authorized administrator credentials.');
                         }
                       }}
                       className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all"

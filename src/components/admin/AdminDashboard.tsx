@@ -33,7 +33,8 @@ import {
   Printer,
   FileCheck,
   KeyRound,
-  Shield
+  Shield,
+  Lock
 } from 'lucide-react';
 import { 
   Student, 
@@ -1170,8 +1171,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
                       Role: ADMIN
                     </span>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100">
-                      Master Key: LRA.2025
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      Master Key: ••••••••
                     </span>
                   </div>
                   <div className="space-y-1 text-xs">
@@ -1231,25 +1233,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                   <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1">
                     <div className="font-extrabold text-slate-900 dark:text-white">MR ELVIS (elvis)</div>
-                    <div className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-[11px]">Elv!s#2026@LRA</div>
+                    <div className="font-mono text-slate-500 dark:text-slate-400 text-[11px] flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-600" />
+                      <span>Password: ••••••••</span>
+                    </div>
                     <p className="text-[10px] text-slate-500">Creative Arts (1-6), Social Studies (4-6), Maths (4-6)</p>
                   </div>
 
                   <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1">
                     <div className="font-extrabold text-slate-900 dark:text-white">MADAM FRESIAH (fresiah)</div>
-                    <div className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-[11px]">Fr3sh!2026#LRA</div>
+                    <div className="font-mono text-slate-500 dark:text-slate-400 text-[11px] flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-600" />
+                      <span>Password: ••••••••</span>
+                    </div>
                     <p className="text-[10px] text-slate-500">Maths (1, 3, 4), Science & Tech (4-6), C.R.E (1-6)</p>
                   </div>
 
                   <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1">
                     <div className="font-extrabold text-slate-900 dark:text-white">MR KELVIN (kelvin)</div>
-                    <div className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-[11px]">K3lv!n$2026@LRA</div>
+                    <div className="font-mono text-slate-500 dark:text-slate-400 text-[11px] flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-600" />
+                      <span>Password: ••••••••</span>
+                    </div>
                     <p className="text-[10px] text-slate-500">English (1-6), Agriculture (4-6)</p>
                   </div>
 
                   <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1">
                     <div className="font-extrabold text-slate-900 dark:text-white">MADAM LIZ (liz)</div>
-                    <div className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-[11px]">L!zzy%2026#LRA</div>
+                    <div className="font-mono text-slate-500 dark:text-slate-400 text-[11px] flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-600" />
+                      <span>Password: ••••••••</span>
+                    </div>
                     <p className="text-[10px] text-slate-500">Kiswahili (1-6), Maths (2), Environmental (1-3)</p>
                   </div>
                 </div>

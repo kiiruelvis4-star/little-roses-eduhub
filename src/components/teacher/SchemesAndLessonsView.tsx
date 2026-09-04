@@ -31,17 +31,19 @@ import {
   ShieldCheck,
   School,
   UserCheck,
-  Users
+  Users,
+  UploadCloud
 } from 'lucide-react';
 import { storage } from '../../services/storageService';
 import { LessonPlanSheetModal } from './LessonPlanSheetModal';
+import { RawSchemeQuickUpload } from './RawSchemeQuickUpload';
 import { getRationalizedSubjectsForGrade } from '../../data/cbeRationalizedCurriculumData';
 
 interface SchemesAndLessonsViewProps {
   schemes: SchemeOfWork[];
   lessons: LessonPlan[];
   records: RecordOfWork[];
-  initialSubTab?: 'schemes' | 'lessons' | 'records';
+  initialSubTab?: 'schemes' | 'lessons' | 'records' | 'rawUpload';
   onOpenCreateModal: (type: 'scheme' | 'lesson' | 'record') => void;
   onOpenEditModal: (type: 'scheme' | 'lesson' | 'record', item: any) => void;
 }
@@ -57,7 +59,7 @@ export const SchemesAndLessonsView: React.FC<SchemesAndLessonsViewProps> = ({
   onOpenCreateModal,
   onOpenEditModal
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'schemes' | 'lessons' | 'records'>(initialSubTab);
+  const [activeSubTab, setActiveSubTab] = useState<'schemes' | 'lessons' | 'records' | 'rawUpload'>(initialSubTab);
   
   // System config state
   const [systemConfig, setSystemConfig] = useState<SystemConfig>(() => storage.getSystemConfig());
@@ -392,6 +394,21 @@ export const SchemesAndLessonsView: React.FC<SchemesAndLessonsViewProps> = ({
               {filteredRecords.length}
             </span>
           </button>
+
+          <button
+            onClick={() => setActiveSubTab('rawUpload')}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+              activeSubTab === 'rawUpload'
+                ? 'bg-[#1a237e] text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            <UploadCloud className="w-4 h-4 text-sky-400" />
+            <span className="whitespace-nowrap">Raw Schemes & Notes</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-sky-200 dark:bg-sky-950 text-sky-900 dark:text-sky-300 font-bold">
+              Live Clock
+            </span>
+          </button>
         </div>
 
         {/* Action Buttons Toolbar */}
@@ -503,83 +520,92 @@ export const SchemesAndLessonsView: React.FC<SchemesAndLessonsViewProps> = ({
       </div>
 
       {/* 3. DUAL-TIER FILTER BAR (Term, Grade & Rationalized Subject Pills) */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-          {/* Term Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-extrabold uppercase text-slate-400 mr-1">Term:</span>
-            {TERMS.map((term) => (
-              <button
-                key={term}
-                onClick={() => setSelectedTerm(term)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                  selectedTerm === term
-                    ? 'bg-blue-900 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                {term}
-              </button>
-            ))}
+      {activeSubTab !== 'rawUpload' && (
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+            {/* Term Selector */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-extrabold uppercase text-slate-400 mr-1">Term:</span>
+              {TERMS.map((term) => (
+                <button
+                  key={term}
+                  onClick={() => setSelectedTerm(term)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                    selectedTerm === term
+                      ? 'bg-blue-900 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+
+            {/* Grade Level Selector */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span className="text-xs font-extrabold uppercase text-slate-400 mr-1">Grade:</span>
+              {GRADES.map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setSelectedGrade(g)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                    selectedGrade === g
+                      ? 'bg-indigo-900 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Grade Level Selector */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <span className="text-xs font-extrabold uppercase text-slate-400 mr-1">Grade:</span>
-            {GRADES.map((g) => (
+          {/* Dynamic Rationalized Subject Pills */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold">
+              <span>
+                Rationalized Subjects for {selectedGrade} ({['Grade 1', 'Grade 2', 'Grade 3'].includes(selectedGrade) ? 'Lower Primary: 7 Areas' : 'Upper Primary: 8 Areas'}):
+              </span>
+              <span className="font-mono text-blue-600 dark:text-blue-400">
+                Active Subject: {selectedSubject}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               <button
-                key={g}
-                onClick={() => setSelectedGrade(g)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                  selectedGrade === g
-                    ? 'bg-indigo-900 text-white shadow-xs'
+                onClick={() => setSelectedSubject('All')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-colors ${
+                  selectedSubject === 'All'
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                 }`}
               >
-                {g}
+                All Subjects
               </button>
-            ))}
+              {availableSubjects.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setSelectedSubject(sub)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-colors ${
+                    selectedSubject === sub
+                      ? 'bg-blue-900 text-white dark:bg-blue-700 shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Dynamic Rationalized Subject Pills */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold">
-            <span>
-              Rationalized Subjects for {selectedGrade} ({['Grade 1', 'Grade 2', 'Grade 3'].includes(selectedGrade) ? 'Lower Primary: 7 Areas' : 'Upper Primary: 8 Areas'}):
-            </span>
-            <span className="font-mono text-blue-600 dark:text-blue-400">
-              Active Subject: {selectedSubject}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-            <button
-              onClick={() => setSelectedSubject('All')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-colors ${
-                selectedSubject === 'All'
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              All Subjects
-            </button>
-            {availableSubjects.map((sub) => (
-              <button
-                key={sub}
-                onClick={() => setSelectedSubject(sub)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-colors ${
-                  selectedSubject === sub
-                    ? 'bg-blue-900 text-white dark:bg-blue-700 shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                {sub}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ==================================================================== */}
+      {/* 4. CONTENT: RAW SCHEMES QUICK UPLOAD (OFFLINE NOTEPAD & LIVE CLOCK)  */}
+      {/* ==================================================================== */}
+      {activeSubTab === 'rawUpload' && (
+        <RawSchemeQuickUpload teacherName={storage.getActiveTeacherProfile().name} />
+      )}
 
       {/* ==================================================================== */}
       {/* 4. CONTENT: SCHEMES OF WORK ENGINE                                   */}

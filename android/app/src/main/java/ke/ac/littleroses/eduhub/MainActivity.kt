@@ -121,8 +121,14 @@ class MainActivity : AppCompatActivity() {
                 if (webView.canGoBack()) {
                     webView.goBack()
                 } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
+                    androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Leaving App")
+                        .setMessage("Oppsy leaving already 🥺😭")
+                        .setNegativeButton("Stay", null)
+                        .setPositiveButton("Exit") { _, _ ->
+                            finish()
+                        }
+                        .show()
                 }
             }
         })

@@ -11,10 +11,12 @@ import {
   Sun,
   Moon,
   ShieldCheck,
-  Clock
+  Clock,
+  Download
 } from 'lucide-react';
 import { SchoolLogo } from './SchoolLogo';
 import { Menu3DotsModal } from './common/Menu3DotsModal';
+import { DownloadAppModal } from './common/DownloadAppModal';
 import { storage } from '../services/storageService';
 
 interface TopAppBarProps {
@@ -51,6 +53,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   onOpenNotices
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   const [timeString, setTimeString] = useState<string>('');
   const [systemSchoolName, setSystemSchoolName] = useState(() => {
     return storage.getSystemConfig().school_metadata.school_name || 'Little Roses Academy';
@@ -186,6 +189,17 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
               </button>
             )}
 
+            {/* Direct App Download Button */}
+            <button
+              onClick={() => setIsDownloadOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95"
+              title="Download Little Roses EduHub Directly (APK / PWA)"
+              aria-label="Download App Directly"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Download App</span>
+            </button>
+
             {/* Theme Toggle Button (Dark to Light at the top where the 3 dots are) */}
             <button
               onClick={onToggleDarkMode}
@@ -212,6 +226,12 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
           </div>
         </div>
       </header>
+
+      {/* Direct App Download Modal */}
+      <DownloadAppModal
+        isOpen={isDownloadOpen}
+        onClose={() => setIsDownloadOpen(false)}
+      />
 
       {/* 3-Dot Menu Modal */}
       <Menu3DotsModal

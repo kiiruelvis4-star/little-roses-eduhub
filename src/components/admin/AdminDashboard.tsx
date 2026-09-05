@@ -54,6 +54,10 @@ import { TeacherCRUDModal } from '../modals/TeacherCRUDModal';
 import { BulkAddLearnersModal } from './BulkAddLearnersModal';
 import { deleteLearner, bulkDeleteLearners } from '../../services/sqliteDb';
 import { DocumentCentre } from './documents/DocumentCentre';
+import { EditLearnerModal } from './EditLearnerModal';
+import { EditNoticeModal } from './EditNoticeModal';
+import { EditCurriculumModal } from './EditCurriculumModal';
+import { CurriculumSettings } from '../../services/storageService';
 
 interface AdminDashboardProps {
   students: Student[];
@@ -128,6 +132,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+
+  // Offline Editing States
+  const [editingLearner, setEditingLearner] = useState<Student | null>(null);
+  const [isEditLearnerOpen, setIsEditLearnerOpen] = useState(false);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
+  const [isEditNoticeOpen, setIsEditNoticeOpen] = useState(false);
+  const [curriculumSettings, setCurriculumSettings] = useState<CurriculumSettings>(() => storage.getCurriculumSettings());
+  const [isEditCurriculumOpen, setIsEditCurriculumOpen] = useState(false);
 
   // Bulk Learner Selection State
   const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>([]);
@@ -665,6 +677,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
+            {/* Offline Operational Center Banner */}
+            <div className="p-4.5 bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 rounded-2xl border border-emerald-500/30 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-sm tracking-tight">100% Offline Operational Suite</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-200 text-[10px] font-bold uppercase tracking-wider">
+                      Local SQLite & Storage Synced
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-100/80 mt-0.5">
+                    Every administrative module (learners, staff, curriculum, notices, documents) is fully editable and instantly persisted without internet.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setIsConfigModalOpen(true)}
+                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-white/10"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Edit School Metadata</span>
+                </button>
+                <button
+                  onClick={() => setIsEditCurriculumOpen(true)}
+                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-white/10"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-blue-300" />
+                  <span>Edit Curriculum</span>
+                </button>
+              </div>
+            </div>
+
             {/* Grid of Enrollment & Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Enrollment Distribution */}
@@ -1072,6 +1121,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => {
+                                  setEditingLearner(std);
+                                  setIsEditLearnerOpen(true);
+                                }}
+                                className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer text-xs"
+                                title={`Edit ${std.name}`}
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => {
                                   storage.setActiveStudentId(std.id);
                                   if (onOpenLearner) {
                                     onOpenLearner(std.id);
@@ -1143,28 +1203,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* TAB 4: CBC CURRICULUM & KPSEA */}
         {activeTab === 'curriculum' && (
           <div className="space-y-6 mt-6 animate-fadeIn">
+            {/* Curriculum Controls Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                    Competency-Based Education (CBE) Curriculum
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[10px] font-bold">
+                    Offline Configurable
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Rationalized KICD learning areas, assessment examination windows, and local CBA preparation.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsEditCurriculumOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+              >
+                <Edit3 className="w-4 h-4 text-blue-300" />
+                <span>Edit Curriculum Structure</span>
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Rationalized CBC Structure */}
               <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
-                  <span>Lower Primary CBE Learning Areas (Grades 1–3)</span>
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-emerald-600" />
+                    <span>Lower Primary CBE Learning Areas (Grades 1–3)</span>
+                  </h3>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    {(curriculumSettings.lowerPrimarySubjects || []).length} Subjects
+                  </span>
+                </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Approved KICD rationalized subjects taught across Little Roses Lower Primary:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {[
-                    'Indigenous Language Activities',
-                    'English Language Activities',
-                    'Kiswahili Language Activities',
-                    'Mathematical Activities',
-                    'Religious Education Activities',
-                    'Environmental Activities',
-                    'Creative Activities'
-                  ].map((sub, i) => (
+                  {(curriculumSettings.lowerPrimarySubjects || []).map((sub, i) => (
                     <div key={i} className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span className="font-medium text-slate-800 dark:text-slate-200">{sub}</span>
                     </div>
                   ))}
@@ -1173,26 +1255,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Upper Primary CBE Learning Areas */}
               <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
-                  <span>Upper Primary CBE Learning Areas (Grades 4–6)</span>
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
+                    <span>Upper Primary CBE Learning Areas (Grades 4–6)</span>
+                  </h3>
+                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                    {(curriculumSettings.upperPrimarySubjects || []).length} Subjects
+                  </span>
+                </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Core curriculum designs preparing Grade 6 candidates for the KPSEA National Assessment:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {[
-                    'Mathematics',
-                    'English',
-                    'Kiswahili',
-                    'Science and Technology',
-                    'Agriculture and Nutrition',
-                    'Social Studies',
-                    'Creative Arts',
-                    'Religious Education'
-                  ].map((sub, i) => (
+                  {(curriculumSettings.upperPrimarySubjects || []).map((sub, i) => (
                     <div key={i} className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                       <span className="font-medium text-slate-800 dark:text-slate-200">{sub}</span>
                     </div>
                   ))}
@@ -1212,7 +1290,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </p>
                 </div>
                 <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-bold">
-                  ✓ Online & Ready
+                  ✓ {curriculumSettings.syncStatus || 'Offline & Local Engine Ready'}
                 </span>
               </div>
 
@@ -1223,11 +1301,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Targeter & Jesma Series</span>
-                  <div className="font-bold text-slate-900 dark:text-white mt-1">Ready for Opener & Midterm</div>
+                  <div className="font-bold text-slate-900 dark:text-white mt-1">{curriculumSettings.examSeriesNote || 'Ready for Opener & Midterm'}</div>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Grade 6 KPSEA Window</span>
-                  <div className="font-bold text-slate-900 dark:text-white mt-1">October 26–29, 2026</div>
+                  <div className="font-bold text-slate-900 dark:text-white mt-1">{curriculumSettings.kpseaWindow || 'October 26–29, 2026'}</div>
                 </div>
               </div>
             </div>
@@ -1356,13 +1434,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </h4>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteNotice(notice.id, notice.title)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
-                      title="Delete Notice"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          setEditingNotice(notice);
+                          setIsEditNoticeOpen(true);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer"
+                        title="Edit Notice (Offline)"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteNotice(notice.id, notice.title)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Notice"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1899,6 +1989,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         onClose={() => setIsBulkAddOpen(false)}
         onSuccess={() => {
           // Reactively synced through storageService
+        }}
+      />
+
+      {/* MODAL: EDIT LEARNER (OFFLINE) */}
+      <EditLearnerModal
+        isOpen={isEditLearnerOpen}
+        onClose={() => {
+          setIsEditLearnerOpen(false);
+          setEditingLearner(null);
+        }}
+        learner={editingLearner}
+        onLearnerUpdated={(updated) => {
+          setLocalStudents(storage.getStudents());
+          showToast(`Learner record for "${updated.name}" updated successfully!`);
+        }}
+      />
+
+      {/* MODAL: EDIT NOTICE (OFFLINE) */}
+      <EditNoticeModal
+        isOpen={isEditNoticeOpen}
+        onClose={() => {
+          setIsEditNoticeOpen(false);
+          setEditingNotice(null);
+        }}
+        notice={editingNotice}
+        onNoticeUpdated={(updated) => {
+          setNotices(storage.getNotices());
+          showToast(`Circular "${updated.title}" updated successfully!`);
+        }}
+      />
+
+      {/* MODAL: EDIT CURRICULUM (OFFLINE) */}
+      <EditCurriculumModal
+        isOpen={isEditCurriculumOpen}
+        onClose={() => setIsEditCurriculumOpen(false)}
+        settings={curriculumSettings}
+        onSettingsUpdated={(updated) => {
+          setCurriculumSettings(updated);
+          showToast('Competency-Based Education curriculum structure updated and persisted offline!');
         }}
       />
 

@@ -33,6 +33,11 @@ export const SchoolConfigModal: React.FC<SchoolConfigModalProps> = ({
   const [headTeacherName, setHeadTeacherName] = useState(config.school_metadata.head_teacher_name);
   const [schoolCode, setSchoolCode] = useState(config.school_metadata.school_code_number);
   const [poBox, setPoBox] = useState(config.school_metadata.po_box || 'P.O. Box 3443 NAKURU');
+  const [phone, setPhone] = useState(config.school_metadata.phone || '0798 193966');
+  const [email, setEmail] = useState(config.school_metadata.email || 'info@littleroses.ac.ke');
+  const [motto, setMotto] = useState(config.school_metadata.motto || 'Much from Little');
+  const [county, setCounty] = useState(config.school_metadata.county || 'Nakuru County');
+  const [subCounty, setSubCounty] = useState(config.school_metadata.sub_county || 'Nakuru East');
   const [isCodeEditable, setIsCodeEditable] = useState(config.school_metadata.is_code_editable);
   const [academicYear, setAcademicYear] = useState(config.active_academic_year);
   const [activeTerm, setActiveTerm] = useState<TermName>(config.active_term);
@@ -50,6 +55,11 @@ export const SchoolConfigModal: React.FC<SchoolConfigModalProps> = ({
         head_teacher_name: headTeacherName.trim() || 'Mr. Kelvin (Headteacher)',
         school_code_number: schoolCode.trim() || 'LRA-NAK-2026-001',
         po_box: poBox.trim() || 'P.O. Box 3443 NAKURU',
+        phone: phone.trim() || '0798 193966',
+        email: email.trim() || 'info@littleroses.ac.ke',
+        motto: motto.trim() || 'Much from Little',
+        county: county.trim() || 'Nakuru County',
+        sub_county: subCounty.trim() || 'Nakuru East',
         is_code_editable: isCodeEditable,
       }
     };
@@ -72,6 +82,11 @@ export const SchoolConfigModal: React.FC<SchoolConfigModalProps> = ({
       setHeadTeacherName(INITIAL_SYSTEM_CONFIG.school_metadata.head_teacher_name);
       setSchoolCode(INITIAL_SYSTEM_CONFIG.school_metadata.school_code_number);
       setPoBox(INITIAL_SYSTEM_CONFIG.school_metadata.po_box || 'P.O. Box 3443 NAKURU');
+      setPhone(INITIAL_SYSTEM_CONFIG.school_metadata.phone || '0798 193966');
+      setEmail(INITIAL_SYSTEM_CONFIG.school_metadata.email || 'info@littleroses.ac.ke');
+      setMotto(INITIAL_SYSTEM_CONFIG.school_metadata.motto || 'Much from Little');
+      setCounty(INITIAL_SYSTEM_CONFIG.school_metadata.county || 'Nakuru County');
+      setSubCounty(INITIAL_SYSTEM_CONFIG.school_metadata.sub_county || 'Nakuru East');
       setIsCodeEditable(INITIAL_SYSTEM_CONFIG.school_metadata.is_code_editable);
       setAcademicYear(INITIAL_SYSTEM_CONFIG.active_academic_year);
       setActiveTerm(INITIAL_SYSTEM_CONFIG.active_term);
@@ -240,6 +255,83 @@ export const SchoolConfigModal: React.FC<SchoolConfigModalProps> = ({
               <p className="text-[10px] text-slate-400 mt-1">
                 Official school postal address printed on academic reports, receipts, and certificates.
               </p>
+            </div>
+
+            {/* Official Phone & Email Contacts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Official Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. 0798 193966"
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Official Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. info@littleroses.ac.ke"
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* School Motto */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                School Motto / Slogan
+              </label>
+              <input
+                type="text"
+                value={motto}
+                onChange={(e) => setMotto(e.target.value)}
+                placeholder="e.g. Much from Little"
+                required
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+
+            {/* County & Sub-County */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  County
+                </label>
+                <input
+                  type="text"
+                  value={county}
+                  onChange={(e) => setCounty(e.target.value)}
+                  placeholder="e.g. Nakuru County"
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Sub-County
+                </label>
+                <input
+                  type="text"
+                  value={subCounty}
+                  onChange={(e) => setSubCounty(e.target.value)}
+                  placeholder="e.g. Nakuru East"
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
             </div>
 
             {/* School Code Number & is_code_editable */}

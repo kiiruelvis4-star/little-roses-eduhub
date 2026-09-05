@@ -209,6 +209,48 @@ export const deleteLearner = (
 };
 
 /**
+ * Update a learner in SQLite database and EduHub offline storage
+ */
+export const updateLearner = (
+  updatedStudent: Student,
+  customDb?: SQLiteDatabase
+): Promise<any> => {
+  const targetDb = customDb || getDatabase();
+  return new Promise((resolve) => {
+    if (targetDb && typeof targetDb.transaction === 'function') {
+      try {
+        targetDb.transaction(
+          (tx: SQLiteTransaction) => {
+            tx.executeSql(
+              'UPDATE learners SET name = ?, grade = ?, gender = ? WHERE id = ?;',
+              [updatedStudent.name, updatedStudent.grade, updatedStudent.gender, updatedStudent.id],
+              (_: SQLiteTransaction, result: any) => {
+                storage.saveStudent(updatedStudent);
+                resolve(result);
+              },
+              () => {
+                storage.saveStudent(updatedStudent);
+                resolve({ fallback: true });
+                return true;
+              }
+            );
+          },
+          () => {
+            storage.saveStudent(updatedStudent);
+            resolve({ fallback: true });
+          }
+        );
+        return;
+      } catch (e) {
+        console.warn('SQLite updateLearner error, using storage fallback:', e);
+      }
+    }
+    storage.saveStudent(updatedStudent);
+    resolve({ rowsAffected: 1, student: updatedStudent });
+  });
+};
+
+/**
  * Bulk delete multiple learners by ID from SQLite database and local storage
  */
 export const bulkDeleteLearners = (

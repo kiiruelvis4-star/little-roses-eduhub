@@ -86,7 +86,41 @@ const STORAGE_KEYS = {
   ACTIVE_TEACHER_ID: 'lra_active_teacher_id_v2',
   TEACHER_PROFILES: 'lra_teacher_profiles_v1',
   MASTER_TEACHER_TIMETABLE: 'lra_master_teacher_timetable_v1',
-  RAW_SAVED_SCHEMES: 'lra_raw_saved_schemes_v1'
+  RAW_SAVED_SCHEMES: 'lra_raw_saved_schemes_v1',
+  CURRICULUM_SETTINGS: 'lra_curriculum_settings_v1'
+};
+
+export interface CurriculumSettings {
+  lowerPrimarySubjects: string[];
+  upperPrimarySubjects: string[];
+  kpseaWindow: string;
+  examSeriesNote: string;
+  syncStatus: string;
+}
+
+export const DEFAULT_CURRICULUM_SETTINGS: CurriculumSettings = {
+  lowerPrimarySubjects: [
+    'Indigenous Language Activities',
+    'English Language Activities',
+    'Kiswahili Language Activities',
+    'Mathematical Activities',
+    'Religious Education Activities',
+    'Environmental Activities',
+    'Creative Activities'
+  ],
+  upperPrimarySubjects: [
+    'Mathematics',
+    'English',
+    'Kiswahili',
+    'Science and Technology',
+    'Agriculture and Nutrition',
+    'Social Studies',
+    'Creative Arts',
+    'Religious Education'
+  ],
+  kpseaWindow: 'October 26–29, 2026',
+  examSeriesNote: 'Ready for Opener & Midterm',
+  syncStatus: 'Offline & Local Engine Ready'
 };
 
 export interface RawSavedScheme {
@@ -593,6 +627,15 @@ class StorageService {
 
   public resetStaffMembers(): void {
     this.setItem(STORAGE_KEYS.STAFF, INITIAL_STAFF);
+  }
+
+  // Curriculum & CBE Rationalized Structure Settings (Offline Editable)
+  public getCurriculumSettings(): CurriculumSettings {
+    return this.getItem<CurriculumSettings>(STORAGE_KEYS.CURRICULUM_SETTINGS, DEFAULT_CURRICULUM_SETTINGS);
+  }
+
+  public saveCurriculumSettings(settings: CurriculumSettings): void {
+    this.setItem(STORAGE_KEYS.CURRICULUM_SETTINGS, settings);
   }
 
   // Teacher Profiles & Authentication Management

@@ -51,6 +51,9 @@ import { SchoolLogo } from '../SchoolLogo';
 import { SchoolConfigModal } from '../modals/SchoolConfigModal';
 import { ResourcesManager } from '../teacher/ResourcesManager';
 import { TeacherCRUDModal } from '../modals/TeacherCRUDModal';
+import { BulkAddLearnersModal } from './BulkAddLearnersModal';
+import { deleteLearner, bulkDeleteLearners } from '../../services/sqliteDb';
+import { DocumentCentre } from './documents/DocumentCentre';
 
 interface AdminDashboardProps {
   students: Student[];
@@ -58,6 +61,7 @@ interface AdminDashboardProps {
   onOpenLearner?: (studentId: string) => void;
   onSwitchPortal?: (role: 'teacher' | 'learner') => void;
   onBackToPortals?: () => void;
+  setStudents?: React.Dispatch<React.SetStateAction<Student[]>> | ((learners: Student[]) => void);
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -65,7 +69,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   schemes,
   onOpenLearner,
   onSwitchPortal,
-  onBackToPortals
+  onBackToPortals,
+  setStudents
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [systemConfig, setSystemConfig] = useState<SystemConfig>(() => storage.getSystemConfig());
@@ -74,10 +79,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [resources, setResources] = useState<ResourceItem[]>(() => storage.getResources());
   const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
   
+  // Local students state so all mutations reflect immediately in UI
+  const [localStudents, setLocalStudents] = useState<Student[]>(() => {
+    const fromStorage = storage.getStudents();
+    return fromStorage && fromStorage.length > 0 ? fromStorage : (students || []);
+  });
+
+  useEffect(() => {
+    if (students && students.length > 0) {
+      setLocalStudents(students);
+    }
+  }, [students]);
+
+  // Subscribe to reactive storage changes
+  useEffect(() => {
+    const unsub = storage.subscribe(() => {
+      setLocalStudents(storage.getStudents());
+      setStaffList(storage.getStaffMembers());
+      setNotices(storage.getNotices());
+    });
+    return () => unsub();
+  }, []);
+
+  // In-app Deletion Modal State (immune to iframe window.confirm blocks)
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    type: 'single-learner' | 'bulk-learners' | 'staff' | 'notice';
+    id?: string;
+    name?: string;
+    count?: number;
+  }>({
+    isOpen: false,
+    type: 'single-learner'
+  });
+
+  // Success Notification Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, 4000);
+  };
+  
   // Modals & Forms
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+
+  // Bulk Learner Selection State
+  const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>([]);
 
   // Search & Filter states
   const [staffSearchQuery, setStaffSearchQuery] = useState('');
@@ -191,11 +244,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsStaffModalOpen(false);
   };
 
-  const handleDeleteStaff = (id: string) => {
-    if (confirm('Are you sure you want to remove this staff member?')) {
-      storage.deleteStaffMember(id);
-      setStaffList(storage.getStaffMembers());
-    }
+  const handleDeleteStaff = (id: string, name?: string) => {
+    const member = staffList.find(s => s.id === id);
+    setDeleteModal({
+      isOpen: true,
+      type: 'staff',
+      id,
+      name: name || member?.name || 'Staff Member'
+    });
   };
 
   const handleAddSpecialization = () => {
@@ -240,11 +296,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setShowNoticeForm(false);
   };
 
-  const handleDeleteNotice = (id: string) => {
-    if (confirm('Are you sure you want to delete this announcement?')) {
-      storage.deleteNotice(id);
-      setNotices(storage.getNotices());
-    }
+  const handleDeleteNotice = (id: string, title?: string) => {
+    const targetNotice = notices.find(n => n.id === id);
+    setDeleteModal({
+      isOpen: true,
+      type: 'notice',
+      id,
+      name: title || targetNotice?.title || 'Announcement'
+    });
   };
 
   // Export / Backup
@@ -259,7 +318,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Filtered lists
+  // Filtered lists (uses localStudents for real-time responsiveness)
   const filteredStaff = staffList.filter(staff => {
     const matchesSearch = staff.name.toLowerCase().includes(staffSearchQuery.toLowerCase()) ||
       staff.role.toLowerCase().includes(staffSearchQuery.toLowerCase()) ||
@@ -271,12 +330,101 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return matchesSearch && matchesRole;
   });
 
-  const filteredStudents = students.filter(student => {
+  const filteredStudents = localStudents.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(learnerSearchQuery.toLowerCase()) ||
       student.admissionNumber.toLowerCase().includes(learnerSearchQuery.toLowerCase());
     const matchesGrade = learnerFilterGrade === 'all' || student.grade === learnerFilterGrade;
     return matchesSearch && matchesGrade;
   });
+
+  // Toggle single selection
+  const handleSelectOneLearner = (id: string) => {
+    if (selectedLearnerIds.includes(id)) {
+      setSelectedLearnerIds(selectedLearnerIds.filter(item => item !== id));
+    } else {
+      setSelectedLearnerIds([...selectedLearnerIds, id]);
+    }
+  };
+
+  // Toggle "Select All"
+  const handleSelectAllLearners = () => {
+    if (selectedLearnerIds.length === filteredStudents.length && filteredStudents.length > 0) {
+      setSelectedLearnerIds([]); // Deselect all
+    } else {
+      setSelectedLearnerIds(filteredStudents.map(item => item.id)); // Select all
+    }
+  };
+
+  // Trigger individual deletion
+  const handleDeleteSingleLearner = (id: string, name: string) => {
+    setDeleteModal({
+      isOpen: true,
+      type: 'single-learner',
+      id,
+      name
+    });
+  };
+
+  // Trigger bulk deletion
+  const handleDeleteSelectedLearners = () => {
+    if (selectedLearnerIds.length === 0) return;
+    setDeleteModal({
+      isOpen: true,
+      type: 'bulk-learners',
+      count: selectedLearnerIds.length
+    });
+  };
+
+  // Execute Confirmed Deletion
+  const handleConfirmDeletion = () => {
+    if (deleteModal.type === 'single-learner' && deleteModal.id) {
+      const targetId = deleteModal.id;
+      const targetName = deleteModal.name || 'Learner';
+
+      // 1. Storage delete
+      const remaining = storage.deleteStudent(targetId);
+      setLocalStudents(remaining);
+      if (setStudents) setStudents(remaining);
+
+      // 2. SQLite delete
+      deleteLearner(targetId).catch(() => {});
+
+      // 3. Update selection
+      setSelectedLearnerIds(prev => prev.filter(id => id !== targetId));
+
+      showToast(`Learner "${targetName}" removed from registry.`);
+    } else if (deleteModal.type === 'bulk-learners') {
+      const count = selectedLearnerIds.length;
+      if (count > 0) {
+        // 1. Storage bulk delete
+        const remaining = storage.bulkDeleteStudents(selectedLearnerIds);
+        setLocalStudents(remaining);
+        if (setStudents) setStudents(remaining);
+
+        // 2. SQLite bulk delete
+        bulkDeleteLearners(selectedLearnerIds).catch(() => {});
+
+        // 3. Clear selection
+        setSelectedLearnerIds([]);
+
+        showToast(`Successfully removed ${count} selected learner(s).`);
+      }
+    } else if (deleteModal.type === 'staff' && deleteModal.id) {
+      const targetId = deleteModal.id;
+      const targetName = deleteModal.name || 'Staff Member';
+      storage.deleteStaffMember(targetId);
+      setStaffList(storage.getStaffMembers());
+      showToast(`Staff member "${targetName}" removed.`);
+    } else if (deleteModal.type === 'notice' && deleteModal.id) {
+      const targetId = deleteModal.id;
+      const targetName = deleteModal.name || 'Announcement';
+      storage.deleteNotice(targetId);
+      setNotices(storage.getNotices());
+      showToast(`Announcement "${targetName}" deleted.`);
+    }
+
+    setDeleteModal({ isOpen: false, type: 'single-learner' });
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 pb-20 transition-colors">
@@ -405,6 +553,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <GraduationCap className="w-4 h-4" />
             <span>Learners & Enrollment ({totalLearners})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('documents')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
+              activeTab === 'documents'
+                ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <FileText className="w-4 h-4 text-amber-300" />
+            <span>📄 Documents</span>
           </button>
 
           <button
@@ -761,15 +921,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleOpenEditStaff(staff)}
-                        className="p-2 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="p-2 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                         title="Edit Staff Member"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteStaff(staff.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                        title="Remove Staff"
+                        onClick={() => handleDeleteStaff(staff.id, staff.name)}
+                        className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                        title={`Remove Staff Member ${staff.name}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -813,8 +973,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </select>
               </div>
 
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Showing <strong>{filteredStudents.length}</strong> of {students.length} Learners
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Showing <strong>{filteredStudents.length}</strong> of {students.length} Learners
+                </div>
+
+                {/* Bulk Action Delete Button */}
+                {selectedLearnerIds.length > 0 && (
+                  <button 
+                    onClick={handleDeleteSelectedLearners}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md shadow-rose-600/30 transition-all cursor-pointer shrink-0 animate-fadeIn"
+                    title={`Delete ${selectedLearnerIds.length} selected learners`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Selected ({selectedLearnerIds.length})</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsBulkAddOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-700/20 transition-all cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Bulk Add Learners</span>
+                </button>
               </div>
             </div>
 
@@ -824,6 +1006,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
                     <tr>
+                      <th className="p-4 w-12 text-center">
+                        <input 
+                          type="checkbox" 
+                          aria-label="Select all learners"
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                          checked={selectedLearnerIds.length === filteredStudents.length && filteredStudents.length > 0} 
+                          onChange={handleSelectAllLearners} 
+                        />
+                      </th>
                       <th className="p-4">Learner Name</th>
                       <th className="p-4">Admission No.</th>
                       <th className="p-4">Grade</th>
@@ -834,53 +1025,118 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                    {filteredStudents.map((std) => (
-                      <tr key={std.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                        <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-black text-xs flex items-center justify-center">
-                            {std.name.charAt(0)}
-                          </div>
-                          <span>{std.name}</span>
-                        </td>
-                        <td className="p-4 font-mono font-bold text-slate-600 dark:text-slate-300">
-                          {std.admissionNumber}
-                        </td>
-                        <td className="p-4">
-                          <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[10px] font-bold">
-                            {std.grade}
-                          </span>
-                        </td>
-                        <td className="p-4 text-slate-600 dark:text-slate-400">
-                          {std.gender}
-                        </td>
-                        <td className="p-4 text-slate-700 dark:text-slate-300">
-                          {std.parentName || 'Guardian'}
-                        </td>
-                        <td className="p-4 text-slate-600 dark:text-slate-400 font-mono">
-                          {std.parentPhone || '0700 000000'}
-                        </td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => {
-                              storage.setActiveStudentId(std.id);
-                              if (onOpenLearner) {
-                                onOpenLearner(std.id);
-                              } else if (onSwitchPortal) {
-                                onSwitchPortal('learner');
-                              }
-                            }}
-                            className="px-3 py-1 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 text-rose-700 dark:text-rose-300 font-bold rounded-lg transition-colors inline-flex items-center gap-1"
-                          >
-                            <span>Inspect</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredStudents.map((std) => {
+                      const isSelected = selectedLearnerIds.includes(std.id);
+                      return (
+                        <tr 
+                          key={std.id} 
+                          className={`transition-colors ${
+                            isSelected 
+                              ? 'bg-rose-50/70 dark:bg-rose-950/20' 
+                              : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
+                          }`}
+                        >
+                          <td className="p-4 text-center">
+                            <input 
+                              type="checkbox" 
+                              aria-label={`Select ${std.name}`}
+                              className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                              checked={isSelected} 
+                              onChange={() => handleSelectOneLearner(std.id)} 
+                            />
+                          </td>
+                          <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-black text-xs flex items-center justify-center">
+                              {std.name.charAt(0)}
+                            </div>
+                            <span>{std.name}</span>
+                          </td>
+                          <td className="p-4 font-mono font-bold text-slate-600 dark:text-slate-300">
+                            {std.admissionNumber}
+                          </td>
+                          <td className="p-4">
+                            <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[10px] font-bold">
+                              {std.grade}
+                            </span>
+                          </td>
+                          <td className="p-4 text-slate-600 dark:text-slate-400">
+                            {std.gender}
+                          </td>
+                          <td className="p-4 text-slate-700 dark:text-slate-300">
+                            {std.parentName || 'Guardian'}
+                          </td>
+                          <td className="p-4 text-slate-600 dark:text-slate-400 font-mono">
+                            {std.parentPhone || '0700 000000'}
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => {
+                                  storage.setActiveStudentId(std.id);
+                                  if (onOpenLearner) {
+                                    onOpenLearner(std.id);
+                                  } else if (onSwitchPortal) {
+                                    onSwitchPortal('learner');
+                                  }
+                                }}
+                                className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 text-rose-700 dark:text-rose-300 font-bold rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer text-xs"
+                                title={`Inspect ${std.name}`}
+                              >
+                                <span>Inspect</span>
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSingleLearner(std.id, std.name)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                                title={`Delete ${std.name}`}
+                                aria-label={`Delete ${std.name}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
+
+              {/* Selection Summary banner when items selected */}
+              {selectedLearnerIds.length > 0 && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                  <span>
+                    <strong>{selectedLearnerIds.length}</strong> of {filteredStudents.length} learner(s) selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedLearnerIds([])}
+                      className="text-slate-500 hover:text-slate-900 dark:hover:text-white underline cursor-pointer"
+                    >
+                      Deselect All
+                    </button>
+                    <button
+                      onClick={handleDeleteSelectedLearners}
+                      className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete Selected</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {/* TAB: DOCUMENT CENTRE */}
+        {activeTab === 'documents' && (
+          <div className="mt-6 animate-fadeIn">
+            <DocumentCentre
+              students={localStudents}
+              staffList={staffList}
+              systemConfig={systemConfig}
+            />
           </div>
         )}
 
@@ -1101,8 +1357,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     <button
-                      onClick={() => handleDeleteNotice(notice.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                      onClick={() => handleDeleteNotice(notice.id, notice.title)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                       title="Delete Notice"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1636,6 +1892,94 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           setResources(storage.getResources());
         }}
       />
+
+      {/* MODAL: BULK ADD LEARNERS */}
+      <BulkAddLearnersModal
+        isOpen={isBulkAddOpen}
+        onClose={() => setIsBulkAddOpen(false)}
+        onSuccess={() => {
+          // Reactively synced through storageService
+        }}
+      />
+
+      {/* NON-BLOCKING IN-APP DELETION CONFIRMATION MODAL */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-black text-slate-900 dark:text-white text-base">
+                  {deleteModal.type === 'single-learner' && 'Delete Learner Record'}
+                  {deleteModal.type === 'bulk-learners' && `Delete ${deleteModal.count || selectedLearnerIds.length} Selected Learners`}
+                  {deleteModal.type === 'staff' && 'Remove Staff Member'}
+                  {deleteModal.type === 'notice' && 'Delete Announcement'}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {deleteModal.type === 'single-learner' && (
+                    <>
+                      Are you sure you want to permanently delete <strong>{deleteModal.name}</strong> from the official learner registry? This will clear enrollment and associated evaluation records.
+                    </>
+                  )}
+                  {deleteModal.type === 'bulk-learners' && (
+                    <>
+                      Are you sure you want to permanently delete <strong>{deleteModal.count || selectedLearnerIds.length}</strong> selected learner(s)? This action updates both SQLite and local registry state.
+                    </>
+                  )}
+                  {deleteModal.type === 'staff' && (
+                    <>
+                      Are you sure you want to remove <strong>{deleteModal.name}</strong> from the faculty directory?
+                    </>
+                  )}
+                  {deleteModal.type === 'notice' && (
+                    <>
+                      Are you sure you want to delete memo "<strong>{deleteModal.name}</strong>"?
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setDeleteModal({ isOpen: false, type: 'single-learner' })}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeletion}
+                className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>
+                  {deleteModal.type === 'bulk-learners'
+                    ? `Delete (${deleteModal.count || selectedLearnerIds.length})`
+                    : 'Confirm Deletion'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION BANNER */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-xl shadow-xl border border-slate-700 dark:border-slate-200 animate-slideUp">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          <span>{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-white dark:hover:text-slate-900 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

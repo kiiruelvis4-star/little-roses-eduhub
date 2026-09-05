@@ -32,9 +32,11 @@ import {
   ShieldCheck,
   Lock,
   Unlock,
-  X
+  X,
+  Database
 } from 'lucide-react';
 import { storage } from '../../services/storageService';
+import { updateTimetableSlot, generateSqliteTimetableSQL } from '../../services/sqliteDb';
 import { SchoolLogo } from '../SchoolLogo';
 import { 
   BELL_SCHEDULE_SLOTS, 
@@ -198,7 +200,24 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
     setMasterSchedule(updatedSchedule);
     storage.saveMasterTeacherSchedule(updatedSchedule);
+
+    // Synchronize to SQLite Timetable database
+    updateTimetableSlot(slot.id, editedSubject, slot.timeSlot).catch((err) => {
+      console.warn('SQLite timetable update warning:', err);
+    });
+
     setEditingSlotId(null);
+  };
+
+  const handleExportSqlite = () => {
+    const sql = generateSqliteTimetableSQL(masterSchedule);
+    const blob = new Blob([sql], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `LittleRoses_Timetable_SQLite_Export_${new Date().toISOString().slice(0, 10)}.sql`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleResetSchedule = () => {
@@ -367,6 +386,15 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Reset</span>
+              </button>
+
+              <button
+                onClick={handleExportSqlite}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600/80 hover:bg-blue-600 active:scale-95 text-white rounded-xl text-xs font-bold transition-all border border-blue-400/40 shadow-xs"
+                title="Export Timetable SQLite .SQL schema & inserts"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Export SQLite</span>
               </button>
               <button
                 onClick={() => window.print()}

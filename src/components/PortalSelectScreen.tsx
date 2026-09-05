@@ -15,7 +15,8 @@ import {
   ShieldCheck, 
   Building2,
   Download,
-  Smartphone
+  Smartphone,
+  FolderArchive
 } from 'lucide-react';
 import { Student, TeacherProfile } from '../types';
 import { storage } from '../services/storageService';
@@ -236,16 +237,24 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-extrabold text-sm tracking-tight">DOWNLOAD APP DIRECTLY</span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/20 text-white uppercase">APK & PWA</span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/20 text-white uppercase">v2.0 • ZIP, APK &amp; PWA</span>
                   </div>
                   <p className="text-xs text-emerald-100 mt-0.5">
-                    Download Android APK (847 KB) or install on phone/PC for 100% offline access.
+                    Download full app ZIP (2.5 MB), Android APK (847 KB), or install on phone/PC for 100% offline access.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-3.5 pt-3 border-t border-white/20">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-white/20">
+              <a
+                href="/LittleRosesEduHub-source.zip"
+                download="LittleRosesEduHub-v2.0-source.zip"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 text-center"
+              >
+                <FolderArchive className="w-4 h-4 text-slate-950" />
+                <span>Download App ZIP</span>
+              </a>
               <a
                 href="/LittleRosesEduHub.apk"
                 download="LittleRosesEduHub.apk"

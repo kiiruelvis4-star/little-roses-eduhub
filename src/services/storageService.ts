@@ -196,9 +196,85 @@ class StorageService {
     }
   }
 
-  public deleteStudent(id: string): void {
-    const list = this.getStudents().filter(s => s.id !== id);
+  public deleteStudent(id: string | number): Student[] {
+    const targetId = String(id).trim();
+    const list = this.getStudents().filter(s => String(s.id).trim() !== targetId);
     this.setItem(STORAGE_KEYS.STUDENTS, list);
+    if (this.getActiveStudentId() === targetId && list.length > 0) {
+      this.setActiveStudentId(list[0].id);
+    }
+    try {
+      localStorage.setItem('eduhub_learners', JSON.stringify(list));
+    } catch (e) {
+      // ignore
+    }
+    return list;
+  }
+
+  public bulkDeleteStudents(ids: (string | number)[]): Student[] {
+    const targetIds = new Set(ids.map(id => String(id).trim()));
+    const list = this.getStudents().filter(s => !targetIds.has(String(s.id).trim()));
+    this.setItem(STORAGE_KEYS.STUDENTS, list);
+    if (targetIds.has(this.getActiveStudentId()) && list.length > 0) {
+      this.setActiveStudentId(list[0].id);
+    }
+    try {
+      localStorage.setItem('eduhub_learners', JSON.stringify(list));
+    } catch (e) {
+      // ignore
+    }
+    return list;
+  }
+
+  public bulkAddLearners(learnersArray: Array<{
+    name: string;
+    grade: GradeLevel | string;
+    gender?: string;
+    admissionNumber?: string;
+    parentName?: string;
+    parentPhone?: string;
+  }>): Promise<{ addedCount: number; message: string; addedStudents: Student[] }> {
+    return new Promise((resolve) => {
+      const existing = this.getStudents();
+      const nextNum = existing.length + 600;
+      const newStudents: Student[] = learnersArray.map((item, idx) => {
+        const id = `std-${nextNum + idx + 1}`;
+        const adm = item.admissionNumber?.trim() || `LRA-${String(nextNum + idx + 1).padStart(4, '0')}`;
+        let grade = (item.grade?.trim() as GradeLevel) || 'Grade 1';
+        if (!['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'].includes(grade)) {
+          grade = 'Grade 1';
+        }
+        const gNorm = (item.gender || '').trim().toLowerCase();
+        const gender: 'Male' | 'Female' = (gNorm === 'female' || gNorm === 'f' || gNorm === 'girl') ? 'Female' : 'Male';
+        
+        return {
+          id,
+          admissionNumber: adm,
+          name: item.name?.trim() || `Learner ${idx + 1}`,
+          grade,
+          gender,
+          parentName: item.parentName?.trim() || 'Parent / Guardian',
+          parentPhone: item.parentPhone?.trim() || '0700 000000',
+          catMarks: {
+            'Mathematics': { cat1: 0, cat2: 0, endTerm: 0 },
+            'English Language': { cat1: 0, cat2: 0, endTerm: 0 },
+            'Kiswahili Lugha': { cat1: 0, cat2: 0, endTerm: 0 },
+            'Integrated Science': { cat1: 0, cat2: 0, endTerm: 0 },
+            'Social Studies': { cat1: 0, cat2: 0, endTerm: 0 },
+            'CRE': { cat1: 0, cat2: 0, endTerm: 0 },
+            'Creative Arts': { cat1: 0, cat2: 0, endTerm: 0 }
+          }
+        };
+      });
+
+      const updated = [...existing, ...newStudents];
+      this.setItem(STORAGE_KEYS.STUDENTS, updated);
+      resolve({
+        addedCount: newStudents.length,
+        message: `All ${newStudents.length} learners added successfully!`,
+        addedStudents: newStudents
+      });
+    });
   }
 
   // Schemes of Work (Termly covering Grade 1 to 6 across all rationalized subjects)
@@ -402,6 +478,49 @@ class StorageService {
       list.push(slot);
     }
     this.setItem(STORAGE_KEYS.TIMETABLE, list);
+  }
+
+  public updateTimetableSlot(id: string | number, newSubject: string, newTimeSlot: string): boolean {
+    const idStr = String(id);
+    let updated = false;
+
+    // 1. Update in master teacher schedule
+    const masterList = this.getMasterTeacherSchedule();
+    const newMaster = masterList.map(slot => {
+      if (slot.id === idStr || String(slot.id) === idStr) {
+        updated = true;
+        return {
+          ...slot,
+          subject: newSubject as any,
+          timeSlot: newTimeSlot
+        };
+      }
+      return slot;
+    });
+    if (updated) {
+      this.saveMasterTeacherSchedule(newMaster);
+    }
+
+    // 2. Update in general timetable
+    const generalList = this.getTimetable();
+    let updatedGeneral = false;
+    const newGeneral = generalList.map(slot => {
+      if (slot.id === idStr || String(slot.id) === idStr) {
+        updatedGeneral = true;
+        return {
+          ...slot,
+          subject: newSubject as any,
+          timeSlot: newTimeSlot
+        };
+      }
+      return slot;
+    });
+    if (updatedGeneral) {
+      this.setItem(STORAGE_KEYS.TIMETABLE, newGeneral);
+      updated = true;
+    }
+
+    return updated;
   }
 
   public updateTimetableGrid(grade: GradeLevel, slots: TimetableSlot[]): void {

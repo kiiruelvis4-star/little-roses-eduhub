@@ -131,6 +131,7 @@ export type AdminTab =
   | 'overview'
   | 'staff'
   | 'learners'
+  | 'documents'
   | 'curriculum'
   | 'resources'
   | 'timetable'
@@ -345,6 +346,7 @@ export interface SchoolMetadata {
   email?: string;
   motto?: string;
   county?: string;
+  sub_county?: string;
 }
 
 export interface ClockSettings {

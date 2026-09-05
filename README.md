@@ -1,74 +1,99 @@
-# Little Roses EduHub (v2.0.0) 🌹
-> **Little Roses Academy Nakuru • CBC EduHub: Teach, Assess, Excel**
+# LITTLE ROSES ACADEMY 🌹
+> **LITTLE ROSES ACADEMY NAKURU • CBC EduHub: Teach, Assess, Excel**
 
-A comprehensive, offline-first Progressive Web App (PWA) and educational platform built for teachers, learners, and administrators at Little Roses Academy under the Kenyan Competency-Based Curriculum (CBC).
+A comprehensive, offline-first Progressive Web App (PWA) and complete educational management platform engineered for teachers, learners, parents, and administrative leadership at **Little Roses Academy** under the Kenyan Competency-Based Curriculum (CBC / CBE).
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Features & Modules
 
-1. **Teacher Workstation**:
-   - Automated Continuous Assessment Test (CAT) entry and real-time grading.
-   - 4-Tier CBC Rubric scoring:
-     - **EE** (Exceeding Expectation 80–100%)
-     - **ME** (Meeting Expectation 65–79%)
-     - **AE** (Approaching Expectation 50–64%)
-     - **BE** (Below Expectation 0–49%)
-   - Automated remarks generation and class performance analytics.
-   - Dynamic weekly timetable and period tracking.
-   - Schemes of work & lesson notes organizer.
+### 1. Teacher Workstation
+- **Automated CAT & Summative Assessment Entry**:
+  - Continuous Assessment Test (CAT 1, CAT 2) and End-Term examination grading with instant calculation.
+  - Automated 4-tier CBC performance rubric:
+    - **EE** (Exceeding Expectation: 80–100%)
+    - **ME** (Meeting Expectation: 65–79%)
+    - **AE** (Approaching Expectation: 50–64%)
+    - **BE** (Below Expectation: 0–49%)
+- **Dynamic Assessment Remarks**:
+  - Context-aware automated teacher remarks based on competency strengths and improvement recommendations.
+- **Weekly Timetable Engine**:
+  - Visual period schedule with live current-period indicators and subject navigation.
+- **Schemes of Work & Notes**:
+  - Lesson plan outlines and revision materials aligned to KICD designs.
 
-2. **Learner & Parent Portal**:
-   - Learner progress dashboard with subject breakdown.
-   - Interactive revision quizzes with instant feedback and answer explanations.
-   - CBC curriculum digital library & downloadable revision materials.
-   - Weekly timetable schedule with active period highlight.
+---
 
-3. **Executive Admin Dashboard**:
-   - Master school records, staff allocation, and student roster management.
-   - Curriculum resource management with role-based WRITE protection.
-   - Term calendar and examination date scheduling.
-   - Full JSON database backup and restoration engine.
+### 2. Learner & Parent Portal
+- **Learner Dashboard**:
+  - Comprehensive subject performance breakdowns and competency level tracking.
+- **Interactive Revision Quizzes**:
+  - Real-time quiz challenges across CBE learning areas with instant answer evaluations.
+- **Digital CBC Curriculum Library**:
+  - Offline-accessible textbooks, revision past papers, and study guides.
+- **Official Circulars & Notices**:
+  - School announcements, term opening/closing dates, and event schedules.
 
-4. **Security & Role-Based Access Control (RBAC)**:
-   - **Administrator**: Full WRITE clearance across official textbooks, curriculum repositories, timetable overrides, and school settings.
-   - **Teachers**: Individual faculty logins with allocated subjects. READ-ONLY clearance on school-wide master materials and READ-WRITE on personal teaching modules.
-   - **Zero On-Screen Credential Exposure**: All master keys and passwords are encrypted and masked in the user interface.
+---
 
-5. **PWA & Offline Capability**:
-   - Service Worker caching for complete offline functionality in classrooms.
-   - Installable on Android, iOS, Windows, and macOS directly from the browser.
-   - Bundled Android APK package included in the repository (`LittleRosesEduHub.apk`).
+### 3. Executive Administrative Dashboard (100% Offline Enabled)
+- **Learner Management**:
+  - Complete offline enrollment directory: add, edit, and search learners across Playgroup to Grade 6 with parental contacts and admission numbers.
+- **Staff & Faculty Roster**:
+  - Teacher subject allocation and workstation credentials management.
+- **CBE Curriculum Structure Configuration**:
+  - Edit and manage Lower Primary (Grades 1–3) and Upper Primary (Grades 4–6) learning areas.
+  - KPSEA Grade 6 examination scheduling and Targeter/Jesma exam series coordination.
+- **School Profile & Metadata**:
+  - Update school motto, postal address (P.O. Box 3443 Nakuru), official phone numbers, and email.
+- **Offline Data Engine & Backups**:
+  - Instant synchronization between in-memory state, Web Storage, and local SQLite/database persistence.
+  - Full JSON export and one-click database restore capability.
+
+---
+
+### 4. Security & Role-Based Access Control (RBAC)
+- **Administrator**: Complete administrative rights across official curriculum designs, master records, fee structures, and school configurations.
+- **Teacher**: Personalized faculty login with assigned learning areas and grade assessments.
+- **Learner / Parent**: Direct access to personalized academic progress, learning materials, and official circulars.
+- **Zero Exposed Secrets**: All sensitive credentials and administrative passcodes are masked in the UI.
+
+---
+
+### 5. Multi-Platform PWA & Offline Support
+- **Full Offline Operations**: Operates continuously without active internet connection via Service Worker caching.
+- **Installable Desktop & Mobile App**: Install directly from Chrome, Edge, Safari, or mobile browsers as a standalone application.
+- **Android APK Package**: Bundled ready-to-install Android APK (`LittleRosesEduHub.apk`) located in `public/`.
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ installed on your computer
-- npm or bun
+- [Node.js](https://nodejs.org/) (version 18.0 or higher)
+- `npm` or `pnpm` or `yarn`
 
-### Quick Setup
+### Local Development Setup
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/kiiruelvis4/little-roses-eduhub.git
+git clone https://github.com/kiiruelvis4/LITTLE-ROSES-ACADEMY.git
 
-# 2. Enter project folder
-cd little-roses-eduhub
+# 2. Navigate to the project directory
+cd LITTLE-ROSES-ACADEMY
 
-# 3. Install dependencies
+# 3. Install project dependencies
 npm install
 
-# 4. Start local development server
+# 4. Launch the local development server
 npm run dev
 ```
 
-Visit `http://localhost:3000` (or the port specified by Vite) in your browser.
+Open `http://localhost:3000` in your web browser to view the application.
 
 ---
 
-## 📦 Building for Production & GitHub Pages
+## 📦 Building for Production
 
 To create an optimized production build:
 
@@ -76,37 +101,29 @@ To create an optimized production build:
 npm run build
 ```
 
-This compiles all assets into the `dist/` directory.
-
-### Deploying to GitHub Pages
-If deploying under a GitHub repository subpath (e.g. `https://kiiruelvis4.github.io/little-roses-eduhub/`):
-
-```bash
-# Set your repository name as the base URL during build
-VITE_BASE_URL=/little-roses-eduhub/ npm run build
-```
+This compiles all TypeScript assets and bundles client files into the `dist/` directory.
 
 ---
 
-## 🔗 Connecting & Pushing to GitHub
+## 🔗 Pushing to GitHub
 
-All files in this workspace are organized into a single unified repository. To push to your GitHub account:
+To push your repository to GitHub under **LITTLE-ROSES-ACADEMY**:
 
 ```bash
-# 1. Check git status
-git status
+# 1. Initialize git if not already present
+git init
 
-# 2. Stage all files
+# 2. Add all project files
 git add .
 
-# 3. Commit your changes
-git commit -m "feat: Little Roses EduHub v2.0.0 with secure authentication and offline PWA"
+# 3. Commit changes
+git commit -m "feat: Initial commit for LITTLE ROSES ACADEMY educational portal"
 
-# 4. Set the main branch
+# 4. Set default branch to main
 git branch -M main
 
-# 5. Connect your remote GitHub repository
-git remote add origin https://github.com/kiiruelvis4/little-roses-eduhub.git
+# 5. Add your GitHub remote repository (replace with your exact GitHub URL)
+git remote add origin https://github.com/kiiruelvis4/LITTLE-ROSES-ACADEMY.git
 
 # 6. Push to GitHub
 git push -u origin main
@@ -114,22 +131,15 @@ git push -u origin main
 
 ---
 
-## 📥 How to Download the Project Files
+## 📥 Exporting / Downloading Options
 
-You can download the entire application using either of these convenient methods:
-
-### Method 1: Google AI Studio Direct Export (Recommended)
-1. In the upper-right corner of the **Google AI Studio** workspace, click on the **Export** / **Settings** menu.
-2. Select **Export to ZIP** to download the complete codebase directly to your computer.
-3. Alternatively, choose **Export to GitHub** to link and sync directly with your GitHub account.
-
-### Method 2: Git Clone
-Once pushed to your GitHub repository:
-```bash
-git clone https://github.com/kiiruelvis4/little-roses-eduhub.git
-```
+1. **Google AI Studio Direct Export**:
+   - In Google AI Studio, click on **Settings / Export** in the top navigation.
+   - Select **Export to GitHub** to sync directly with your repository, or choose **Download ZIP** to save the full source archive.
+2. **Direct Download from the App**:
+   - Within the running app, access the top-right menu **(⋮)** and select **Download Source Code (ZIP)**.
 
 ---
 
-## 🏫 Little Roses Academy Nakuru
-*Teach • Assess • Excel*
+## 🏫 Little Roses Academy
+*P.O. Box 3443 Nakuru • Teach • Assess • Excel*
